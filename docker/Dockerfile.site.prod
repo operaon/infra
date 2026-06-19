@@ -1,0 +1,53 @@
+# ==================== STAGE 1: BUILD ====================
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+RUN npm install -g pnpm
+
+COPY package.json pnpm-lock.yaml* ./
+RUN pnpm install --no-frozen-lockfile
+
+COPY client ./client
+COPY shared ./shared
+COPY tsconfig.json vite.config.ts ./
+COPY tailwind.config.ts* ./
+
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
+RUN pnpm run build
+
+# ==================== STAGE 2: SERVE (nginx estatico) ====================
+FROM nginx:1.27-alpine
+
+LABEL description="Velyon Site - Static Frontend"
+
+RUN rm /etc/nginx/conf.d/default.conf
+
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+RUN printf 'server {\n\
+    listen 5174;\n\
+    root /usr/share/nginx/html;\n\
+    index index.html;\n\
+    gzip on;\n\
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml image/svg+xml;\n\
+    \n\
+    location /health {\n\
+    access_log off;\n\
+    return 200 "OK\n";\n\
+    add_header Content-Type text/plain;\n\
+    }\n\
+    \n\
+    location / {\n\
+    try_files $uri $uri/ /index.html;\n\
+    }\n\
+    }\n' > /etc/nginx/conf.d/site.conf
+
+EXPOSE 5174
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD wget -q -O /dev/null http://127.0.0.1:5174/health || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]
