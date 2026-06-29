@@ -36,8 +36,13 @@ RUN printf 'server {\n\
     \n\
     location /health {\n\
     access_log off;\n\
-    return 200 "OK\n";\n\
+    return 200 "OK\\n";\n\
     add_header Content-Type text/plain;\n\
+    }\n\
+    \n\
+    location /site/ {\n\
+    alias /usr/share/nginx/html/;\n\
+    try_files $uri $uri/ /index.html;\n\
     }\n\
     \n\
     location / {\n\
