@@ -18,7 +18,7 @@ ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 RUN pnpm run build
 
-# ==================== STAGE 2: SERVE (nginx estatico ) ====================
+# ==================== STAGE 2: SERVE (nginx estatico) ====================
 FROM nginx:1.27-alpine
 
 LABEL description="Velyon Site - Static Frontend"
