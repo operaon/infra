@@ -1,0 +1,12 @@
+docker/.env
+docker/.env.*
+!docker/.env.example
+
+nginx/ssl/*.pem
+nginx/ssl/*.key
+nginx/logs/*.log
+
+*.log
+.DS_Store
+.vscode
+.idea

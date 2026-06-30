@@ -1,0 +1,105 @@
+# ============================================================
+# HTTPS (porta 443) — habilitado automaticamente apenas quando
+# /etc/letsencrypt/live/velyonrobotics.com/{fullchain,privkey}.pem
+# existem (ver nginx/docker-entrypoint.d/10-enable-ssl.sh).
+#
+# Este arquivo termina em ".template" de propósito: o Nginx só
+# inclui *.conf de conf.d/, então ele é ignorado até o entrypoint
+# copiá-lo para 20-https.conf no boot do container.
+# ============================================================
+
+# ------------------------------------------------------------
+# velyonrobotics.com (+ www) → site estático
+# ------------------------------------------------------------
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name velyonrobotics.com www.velyonrobotics.com;
+
+    ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/velyonrobotics.com/chain.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+    ssl_session_tickets off;
+
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    resolver 1.1.1.1 8.8.8.8 valid=300s;
+    resolver_timeout 5s;
+
+    include /etc/nginx/snippets/security-headers.conf;
+
+    access_log /var/log/nginx/access.log main;
+    error_log  /var/log/nginx/error.log warn;
+
+    include /etc/nginx/snippets/site-locations.conf;
+}
+
+# ------------------------------------------------------------
+# fisioterapeuta.velyonrobotics.com → frontend (tenant app)
+# ------------------------------------------------------------
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name fisioterapeuta.velyonrobotics.com;
+
+    ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/velyonrobotics.com/chain.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+    ssl_session_tickets off;
+
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    resolver 1.1.1.1 8.8.8.8 valid=300s;
+    resolver_timeout 5s;
+
+    include /etc/nginx/snippets/security-headers.conf;
+
+    access_log /var/log/nginx/access.log main;
+    error_log  /var/log/nginx/error.log warn;
+
+    include /etc/nginx/snippets/tenant-locations.conf;
+}
+
+# ------------------------------------------------------------
+# api.velyonrobotics.com → API (Node.js)
+# ------------------------------------------------------------
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name api.velyonrobotics.com;
+
+    ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/velyonrobotics.com/chain.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+    ssl_session_tickets off;
+
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    resolver 1.1.1.1 8.8.8.8 valid=300s;
+    resolver_timeout 5s;
+
+    include /etc/nginx/snippets/security-headers.conf;
+
+    access_log /var/log/nginx/access.log main;
+    error_log  /var/log/nginx/error.log warn;
+
+    include /etc/nginx/snippets/api-locations.conf;
+}

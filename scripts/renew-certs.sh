@@ -15,7 +15,7 @@
 
 set -euo pipefail
 
-COMPOSE_FILE="/opt/velyon/velyon_infra/docker/docker-compose.prod.yml"
+COMPOSE_FILE="/opt/velyon/velyon_infra/docker/docker-compose.yml"
 LOG_PREFIX="[renew-certs] $(date '+%Y-%m-%d %H:%M:%S')"
 
 echo "$LOG_PREFIX — Iniciando verificação de renovação..."

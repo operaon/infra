@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-COMPOSE_FILE="/opt/velyon/velyon_infra/docker/docker-compose.prod.yml"
+COMPOSE_FILE="/opt/velyon/velyon_infra/docker/docker-compose.yml"
 EMAIL="admin@velyonrobotics.com"
 
 echo "=== [init-certs] Verificando se o nginx está rodando..."
@@ -48,8 +48,10 @@ echo "Próximos passos:"
 echo "  1. O cert está em: /etc/letsencrypt/live/velyonrobotics.com/"
 echo "     (dentro do volume Docker 'certbot_certs')"
 echo ""
-echo "  2. Recarregue o nginx para ativar HTTPS:"
-echo "     docker compose -f $COMPOSE_FILE exec nginx nginx -s reload"
+echo "  2. Recrie o container do nginx para ele detectar o certificado"
+echo "     e habilitar HTTPS automaticamente (um simples 'reload' NÃO"
+echo "     basta, pois a detecção roda no boot do container):"
+echo "     docker compose -f $COMPOSE_FILE up -d --force-recreate nginx"
 echo ""
 echo "  3. Instale o cron de renovação automática no host:"
 echo "     crontab -e"

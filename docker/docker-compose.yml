@@ -2,9 +2,9 @@ services:
   # ==================== Redis Cache ====================
   redis:
     image: redis:7-alpine
-    container_name: prod_redis
+    container_name: velyon_redis
     restart: always
-    command: redis-server --appendonly yes --requirepass qoRufVQAZqOQ5Bnrn5VzNkQjF4sjlBef --maxmemory 512mb --maxmemory-policy allkeys-lru
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --maxmemory 512mb --maxmemory-policy allkeys-lru
     expose:
       - "6379"
     volumes:
@@ -33,12 +33,16 @@ services:
           memory: 256M
 
   # ==================== Node.js API ====================
+  # Usa sempre o mesmo banco Postgres (externo, gerenciado fora deste
+  # compose) tanto em produção quanto em ambiente local de desenvolvimento.
+  # Não existe container de Postgres aqui: DB_HOST/DATABASE_URL sempre
+  # apontam para o mesmo banco, via env_file (.env compartilhado).
   api:
-    image: api-clinica:production
+    image: api-clinica:latest
     build:
       context: ../../velyon_api
       dockerfile: ../velyon_infra/docker/Dockerfile.api.prod
-    container_name: prod_api
+    container_name: velyon_api
     restart: always
     env_file:
       - ../../velyon_api/.env
@@ -46,16 +50,18 @@ services:
       NODE_ENV: production
       PORT: 3000
       FRONTEND_URL: https://fisioterapeuta.velyonrobotics.com
-      DATABASE_URL: postgresql://dbadmin:SenhaForte2026@velyon:6432/velyon?sslmode=require
-      REDIS_URL: redis://:qoRufVQAZqOQ5Bnrn5VzNkQjF4sjlBef@redis:6379/0
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@velyon:${DB_PORT}/${DB_NAME}?sslmode=require
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       DB_HOST: velyon
-      DB_PORT: 6432
-      DB_NAME: velyon
-      DB_USER: dbadmin
-      DB_PASSWORD: SenhaForte2026
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
       DATABASE_SSL: "true"
     extra_hosts:
-      - "velyon:177.223.51.25"
+      # Mesmo host de banco em produção e localmente — requisito: usar
+      # sempre o banco de produção, nunca um Postgres local.
+      - "velyon:${DB_HOST_IP}"
     expose:
       - 3000
     depends_on:
@@ -89,7 +95,7 @@ services:
 
   # ==================== Node.js Frontend Tenant ====================
   frontend:
-    image: tenant-frontend:production
+    image: tenant-frontend:latest
     build:
       context: ../../velyon_frontend_tenant
       dockerfile: ../velyon_infra/docker/Dockerfile.frontend.prod
@@ -98,7 +104,7 @@ services:
       # resolvendo sempre para o mesmo domínio que serviu a página
       # (fisioterapeuta.velyonrobotics.com/api/...) via proxy interno
       # do nginx. A API nunca precisa de um domínio público próprio.
-    container_name: prod_frontend
+    container_name: velyon_frontend
     restart: always
     env_file:
       - ../../velyon_frontend_tenant/.env
@@ -136,11 +142,11 @@ services:
 
   # ==================== Static Site Frontend ====================
   site:
-    image: site-frontend:production
+    image: site-frontend:latest
     build:
       context: ../../velyon_frontend_site
       dockerfile: ../velyon_infra/docker/Dockerfile.site.prod
-    container_name: prod_site
+    container_name: velyon_site
     restart: always
     expose:
       - 5174
@@ -169,12 +175,19 @@ services:
       start_period: 10s
 
   # ==================== Nginx Reverse Proxy ====================
+  # Mesma imagem/config em produção e local. Se houver certificados SSL
+  # válidos montados em /etc/letsencrypt (volume certbot_certs), o HTTPS
+  # é habilitado automaticamente no startup (ver
+  # nginx/docker-entrypoint.d/10-enable-ssl.sh). Sem certificados —
+  # caso de uma máquina local sem domínio público — o Nginx serve tudo
+  # em HTTP simples (porta 80), usando os mesmos nomes de domínio
+  # (resolvidos localmente via /etc/hosts apontando para 127.0.0.1).
   nginx:
     build:
       context: ..
       dockerfile: docker/Dockerfile.nginx
-    image: app-nginx:production
-    container_name: prod_nginx
+    image: app-nginx:latest
+    container_name: velyon_nginx
     restart: always
     ports:
       - "80:80"
@@ -222,16 +235,17 @@ services:
       start_period: 10s
 
   # ==================== Certbot (Let's Encrypt) ====================
+  # Só é usado em produção (servidor com DNS público apontando para ele).
+  # Não inicia automaticamente com "docker compose up" — é disparado
+  # manualmente via scripts/init-certs.sh / scripts/renew-certs.sh.
+  # Em ambiente local, simplesmente nunca é executado.
   certbot:
     image: certbot/certbot:latest
-    container_name: prod_certbot
+    container_name: velyon_certbot
     restart: "no"
     volumes:
       - certbot_www:/var/www/certbot
       - certbot_certs:/etc/letsencrypt
-    # Emite o certificado na primeira execução.
-    # Após emitido, este container fica parado — a renovação é feita
-    # pelo script scripts/renew-certs.sh via cron no host.
     entrypoint: >
       certbot certonly
         --webroot
@@ -242,6 +256,7 @@ services:
         -d velyonrobotics.com
         -d www.velyonrobotics.com
         -d fisioterapeuta.velyonrobotics.com
+        -d api.velyonrobotics.com
     networks:
       - app_network
 
