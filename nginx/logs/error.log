@@ -45,3 +45,5 @@
 2026/06/29 22:17:29 [emerg] 1#1: invalid number of arguments in "rewrite" directive in /etc/nginx/conf.d/app.conf:69
 2026/06/29 22:30:34 [error] 20#20: *66 access forbidden by rule, client: 172.18.0.1, server: localhost, request: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/2.0", host: "localhost"
 2026/06/30 01:21:02 [error] 20#20: *319 access forbidden by rule, client: 172.18.0.1, server: localhost, request: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/2.0", host: "localhost"
+2026/06/30 01:55:31 [error] 20#20: *408 access forbidden by rule, client: 172.18.0.1, server: localhost, request: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/2.0", host: "localhost"
+2026/06/30 02:02:57 [error] 20#20: *439 access forbidden by rule, client: 172.18.0.1, server: localhost, request: "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/2.0", host: "localhost"
