@@ -46,11 +46,11 @@ services:
       NODE_ENV: production
       PORT: 3000
       FRONTEND_URL: https://fisioterapeuta.velyonrobotics.com
-      DATABASE_URL: postgresql://dbadmin:SenhaForte2026@velyon:6432/producao?sslmode=require
+      DATABASE_URL: postgresql://dbadmin:SenhaForte2026@velyon:6432/velyon?sslmode=require
       REDIS_URL: redis://:qoRufVQAZqOQ5Bnrn5VzNkQjF4sjlBef@redis:6379/0
       DB_HOST: velyon
       DB_PORT: 6432
-      DB_NAME: producao
+      DB_NAME: velyon
       DB_USER: dbadmin
       DB_PASSWORD: SenhaForte2026
       DATABASE_SSL: "true"
