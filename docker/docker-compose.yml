@@ -243,6 +243,15 @@ services:
     image: certbot/certbot:latest
     container_name: velyon_certbot
     restart: "no"
+    # profile próprio: NÃO sobe com "docker compose up" (mesmo sem -d
+    # ou --build). Só roda quando chamado explicitamente com
+    # "docker compose --profile certbot run --rm certbot ...", como
+    # fazem scripts/init-certs.sh e scripts/renew-certs.sh.
+    # Sem isso, o certbot tentava emitir certificado toda vez que o
+    # stack subia — incluindo em máquinas locais sem domínio público,
+    # arriscando bater no rate limit do Let's Encrypt.
+    profiles:
+      - certbot
     volumes:
       - certbot_www:/var/www/certbot
       - certbot_certs:/etc/letsencrypt

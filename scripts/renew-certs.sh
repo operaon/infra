@@ -21,7 +21,7 @@ LOG_PREFIX="[renew-certs] $(date '+%Y-%m-%d %H:%M:%S')"
 echo "$LOG_PREFIX — Iniciando verificação de renovação..."
 
 # Tenta renovar. O certbot só renova se o cert vencer em menos de 30 dias.
-docker compose -f "$COMPOSE_FILE" run --rm certbot \
+docker compose -f "$COMPOSE_FILE" --profile certbot run --rm certbot \
     certbot renew \
         --webroot \
         --webroot-path=/var/www/certbot \

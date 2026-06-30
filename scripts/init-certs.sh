@@ -29,7 +29,7 @@ docker compose -f "$COMPOSE_FILE" ps nginx | grep -q "running" || {
 
 echo "=== [init-certs] Emitindo certificado via Let's Encrypt (webroot)..."
 
-docker compose -f "$COMPOSE_FILE" run --rm certbot \
+docker compose -f "$COMPOSE_FILE" --profile certbot run --rm certbot \
     certbot certonly \
         --webroot \
         --webroot-path=/var/www/certbot \
