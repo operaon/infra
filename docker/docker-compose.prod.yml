@@ -97,13 +97,13 @@ services:
       NODE_ENV: production
       PORT: 3000
       FRONTEND_URL: https://fisioterapeuta.velyonrobotics.com
-      DATABASE_URL: postgresql://clinica_user:l4cqF58iJzc0bvFAauZI24YLJzx+MHA+@postgres:5432/api_clinica_prod
+      DATABASE_URL: postgresql://dbadmin:SenhaForte2026@velyon:6432/velyon
       REDIS_URL: redis://:qoRufVQAZqOQ5Bnrn5VzNkQjF4sjlBef@redis:6379/0
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: api_clinica_prod
-      DB_USER: clinica_user
-      DB_PASSWORD: l4cqF58iJzc0bvFAauZI24YLJzx+MHA+
+      DB_HOST: velyon
+      DB_PORT: 6432
+      DB_NAME: velyon
+      DB_USER: dbadmin
+      DB_PASSWORD: SenhaForte2026
     expose:
       - 3000
     depends_on:
