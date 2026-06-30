@@ -93,8 +93,11 @@ services:
     build:
       context: ../../velyon_frontend_tenant
       dockerfile: ../velyon_infra/docker/Dockerfile.frontend.prod
-      args:
-        VITE_API_BASE_URL: https://api.velyonrobotics.com/api
+      # VITE_API_BASE_URL propositalmente não definido: o frontend já
+      # usa "/api" (relativo) como padrão quando a variável não existe,
+      # resolvendo sempre para o mesmo domínio que serviu a página
+      # (fisioterapeuta.velyonrobotics.com/api/...) via proxy interno
+      # do nginx. A API nunca precisa de um domínio público próprio.
     container_name: prod_frontend
     restart: always
     env_file:
@@ -102,7 +105,6 @@ services:
     environment:
       NODE_ENV: production
       PORT: 5173
-      VITE_API_BASE_URL: https://api.velyonrobotics.com/api
       EXTERNAL_API_URL: http://api:3000/api
     expose:
       - 5173
@@ -138,8 +140,6 @@ services:
     build:
       context: ../../velyon_frontend_site
       dockerfile: ../velyon_infra/docker/Dockerfile.site.prod
-      args:
-        VITE_API_BASE_URL: https://api.velyonrobotics.com/api
     container_name: prod_site
     restart: always
     expose:
@@ -242,7 +242,6 @@ services:
         -d velyonrobotics.com
         -d www.velyonrobotics.com
         -d fisioterapeuta.velyonrobotics.com
-        -d api.velyonrobotics.com
     networks:
       - app_network
 
