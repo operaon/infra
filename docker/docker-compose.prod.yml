@@ -104,6 +104,8 @@ services:
       DB_NAME: velyon
       DB_USER: dbadmin
       DB_PASSWORD: SenhaForte2026
+    extra_hosts:
+      - "velyon:177.223.52.11"
     expose:
       - 3000
     depends_on:
