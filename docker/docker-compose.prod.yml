@@ -1,55 +1,4 @@
 services:
-  # ==================== PostgreSQL Database ====================
-  postgres:
-    image: postgres:15-alpine
-    container_name: prod_postgres
-    restart: always
-    environment:
-      POSTGRES_DB: api_clinica_prod
-      POSTGRES_USER: clinica_user
-      POSTGRES_PASSWORD: l4cqF58iJzc0bvFAauZI24YLJzx+MHA+
-    command: >
-      postgres
-      -c max_connections=200
-      -c shared_buffers=256MB
-      -c effective_cache_size=1GB
-      -c maintenance_work_mem=64MB
-      -c checkpoint_completion_target=0.9
-      -c wal_buffers=16MB
-      -c default_statistics_target=100
-      -c random_page_cost=1.1
-      -c effective_io_concurrency=200
-      -c work_mem=4MB
-      -c min_wal_size=2GB
-      -c max_wal_size=8GB
-    expose:
-      - "5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ../scripts:/docker-entrypoint-initdb.d:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U clinica_user -d api_clinica_prod"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - app_network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "5"
-        labels: "service=postgres"
-    deploy:
-      resources:
-        limits:
-          cpus: "2"
-          memory: 1G
-        reservations:
-          cpus: "1"
-          memory: 512M
-
   # ==================== Redis Cache ====================
   redis:
     image: redis:7-alpine
@@ -109,8 +58,6 @@ services:
     expose:
       - 3000
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
     volumes:
@@ -299,7 +246,6 @@ services:
       - app_network
 
 volumes:
-  postgres_data:
   redis_data:
   certbot_www:
   certbot_certs:
