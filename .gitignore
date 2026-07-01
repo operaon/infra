@@ -1,0 +1,9 @@
+# Logs e saídas de comando geradas sem querer (ex: docker-compose build > build.log)
+*.log
+build.log
+
+# Scripts SQL de debug/consulta manual avulsa
+docker/check_*.sql
+
+# Certificados SSL (nunca versionar)
+docker/certbot_certs/
