@@ -1,0 +1,16 @@
+# docker/Dockerfile.certinit
+#
+# Imagem mínima usada pelo serviço "cert-init" do docker-compose.yml:
+# roda uma única vez, antes do nginx, para garantir que sempre exista
+# um certificado SSL válido — real (Let's Encrypt) ou autoassinado de
+# fallback. Ver scripts/cert-init-entrypoint.sh para a lógica.
+
+FROM certbot/certbot:latest
+
+# Imagem oficial do certbot é baseada em Alpine.
+RUN apk add --no-cache openssl
+
+COPY scripts/cert-init-entrypoint.sh /cert-init-entrypoint.sh
+RUN chmod +x /cert-init-entrypoint.sh
+
+ENTRYPOINT ["/cert-init-entrypoint.sh"]

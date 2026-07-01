@@ -182,6 +182,39 @@ services:
   # caso de uma máquina local sem domínio público — o Nginx serve tudo
   # em HTTP simples (porta 80), usando os mesmos nomes de domínio
   # (resolvidos localmente via /etc/hosts apontando para 127.0.0.1).
+  # ==================== Provisionamento automático de SSL ====================
+  # Roda uma única vez, ANTES do nginx, garantindo que sempre exista um
+  # certificado válido — tenta Let's Encrypt (produção, DNS público) e
+  # cai automaticamente para autoassinado (local) se não conseguir.
+  # Não requer nenhuma etapa manual: acontece em todo "docker compose up".
+  # Ver scripts/cert-init-entrypoint.sh para a lógica completa.
+  cert-init:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.certinit
+    image: velyon-cert-init:latest
+    container_name: velyon_cert_init
+    restart: "no"
+    environment:
+      LETSENCRYPT_EMAIL: admin@velyonrobotics.com
+      DOMAINS: velyonrobotics.com,www.velyonrobotics.com,fisioterapeuta.velyonrobotics.com,api.velyonrobotics.com
+    ports:
+      # Necessário apenas para o desafio HTTP-01 do modo --standalone
+      # do certbot. Sem conflito com o nginx: este container sempre
+      # termina (exit) antes do nginx ser criado (depends_on abaixo),
+      # liberando a porta 80.
+      - "80:80"
+    volumes:
+      - certbot_certs:/etc/letsencrypt
+    networks:
+      - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=cert-init"
+
   nginx:
     build:
       context: ..
@@ -197,6 +230,8 @@ services:
       - certbot_www:/var/www/certbot:ro
       - certbot_certs:/etc/letsencrypt:ro
     depends_on:
+      cert-init:
+        condition: service_completed_successfully
       api:
         condition: service_healthy
       frontend:
@@ -234,10 +269,12 @@ services:
       retries: 3
       start_period: 10s
 
-  # ==================== Certbot (Let's Encrypt) ====================
-  # Só é usado em produção (servidor com DNS público apontando para ele).
-  # Não inicia automaticamente com "docker compose up" — é disparado
-  # manualmente via scripts/init-certs.sh / scripts/renew-certs.sh.
+  # ==================== Certbot (Let's Encrypt) — renovação manual ====================
+  # Usado apenas para RENOVAÇÃO periódica em produção (via cron +
+  # scripts/renew-certs.sh), com o nginx já rodando (método webroot).
+  # O provisionamento inicial automático é feito pelo serviço
+  # cert-init acima. Este aqui não inicia automaticamente com
+  # "docker compose up" — precisa do profile "certbot" explicitamente.
   # Em ambiente local, simplesmente nunca é executado.
   certbot:
     image: certbot/certbot:latest
