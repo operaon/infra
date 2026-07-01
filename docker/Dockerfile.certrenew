@@ -1,0 +1,7 @@
+# docker/Dockerfile.certrenew
+FROM certbot/certbot:v5.5.0
+
+COPY scripts/cert-renew-loop.sh /cert-renew-loop.sh
+RUN chmod +x /cert-renew-loop.sh
+
+ENTRYPOINT ["/cert-renew-loop.sh"]

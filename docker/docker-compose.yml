@@ -216,6 +216,20 @@ services:
         max-file: "3"
         labels: "service=cert-init"
 
+  # ==================== Renovação Automática (Daemon) ====================
+  cert-renew:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.certrenew
+    image: velyon-cert-renew:latest
+    container_name: velyon_cert_renew
+    restart: always
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_certs:/etc/letsencrypt
+    networks:
+      - app_network
+
   nginx:
     build:
       context: ..
