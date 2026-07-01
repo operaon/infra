@@ -7,3 +7,8 @@ docker/check_*.sql
 
 # Certificados SSL (nunca versionar)
 docker/certbot_certs/
+
+# Não é mais necessário: credenciais de banco/redis vêm todas de
+# velyon_api/.env via env_file. Se esse arquivo for recriado localmente
+# por engano, não deve ser versionado.
+docker/.env

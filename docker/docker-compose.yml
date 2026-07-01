@@ -4,13 +4,20 @@ services:
     image: redis:7-alpine
     container_name: velyon_redis
     restart: always
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD} --maxmemory 512mb --maxmemory-policy allkeys-lru
+    # REDIS_PASSWORD vem do mesmo env_file usado pela api (fonte única de
+    # verdade). $$ escapa o interpolador do Compose: a expansão real de
+    # $REDIS_PASSWORD acontece em runtime, pelo shell dentro do container.
+    env_file:
+      - ../../velyon_api/.env
+    command: sh -c 'redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD" --maxmemory 512mb --maxmemory-policy allkeys-lru'
     expose:
       - "6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      # CMD-SHELL (não CMD) porque precisamos de expansão de variável de
+      # ambiente ($REDIS_PASSWORD) em runtime dentro do container.
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
