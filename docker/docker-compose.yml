@@ -206,6 +206,7 @@ services:
       - "80:80"
     volumes:
       - certbot_certs:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
     networks:
       - app_network
     logging:
