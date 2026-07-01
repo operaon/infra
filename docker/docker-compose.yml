@@ -277,7 +277,7 @@ services:
   # "docker compose up" — precisa do profile "certbot" explicitamente.
   # Em ambiente local, simplesmente nunca é executado.
   certbot:
-    image: certbot/certbot:latest
+    image: certbot/certbot:v5.5.0
     container_name: velyon_certbot
     restart: "no"
     # profile próprio: NÃO sobe com "docker compose up" (mesmo sem -d
