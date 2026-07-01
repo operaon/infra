@@ -63,6 +63,14 @@ services:
       - ../../velyon_api/.env
     expose:
       - 3000
+    # Publica 3000 SÓ em loopback (127.0.0.1), nunca em 0.0.0.0: permite
+    # rodar o frontend local via `pnpm dev` (fora do Docker, ver
+    # velyon_frontend_tenant/.env.local.example) acessando a api
+    # dockerizada em http://localhost:3000, sem expor a api publicamente
+    # — em produção o nginx continua sendo o único ponto de entrada
+    # externo, via rede interna do Docker (http://api:3000).
+    ports:
+      - "127.0.0.1:3000:3000"
     depends_on:
       redis:
         condition: service_healthy
@@ -105,12 +113,10 @@ services:
       # do nginx. A API nunca precisa de um domínio público próprio.
     container_name: velyon_frontend
     restart: always
+    # NODE_ENV, PORT e EXTERNAL_API_URL vêm todos do env_file abaixo —
+    # fonte única de verdade, sem duplicação/hardcode aqui no compose.
     env_file:
       - ../../velyon_frontend_tenant/.env
-    environment:
-      NODE_ENV: production
-      PORT: 5173
-      EXTERNAL_API_URL: http://api:3000/api
     expose:
       - 5173
     volumes:
@@ -147,6 +153,11 @@ services:
       dockerfile: ../velyon_infra/docker/Dockerfile.site.prod
     container_name: velyon_site
     restart: always
+    # NODE_ENV, PORT, SESSION_SECRET, CORS_ORIGIN etc. vêm todos do
+    # env_file abaixo — antes este serviço não tinha env_file nenhum e
+    # o velyon_frontend_site/.env não era efetivamente usado no build/run.
+    env_file:
+      - ../../velyon_frontend_site/.env
     expose:
       - 5174
     networks:
@@ -194,9 +205,10 @@ services:
     image: velyon-cert-init:latest
     container_name: velyon_cert_init
     restart: "no"
-    environment:
-      LETSENCRYPT_EMAIL: admin@velyonrobotics.com
-      DOMAINS: velyonrobotics.com,www.velyonrobotics.com,fisioterapeuta.velyonrobotics.com,api.velyonrobotics.com
+    # LETSENCRYPT_EMAIL e DOMAINS vêm do docker/.env (exclusivo da infra,
+    # não pertence a nenhum app específico).
+    env_file:
+      - .env
     ports:
       # Necessário apenas para o desafio HTTP-01 do modo --standalone
       # do certbot. Sem conflito com o nginx: este container sempre
@@ -303,20 +315,27 @@ services:
     # arriscando bater no rate limit do Let's Encrypt.
     profiles:
       - certbot
+    # LETSENCRYPT_EMAIL e DOMAINS vêm do docker/.env (mesma fonte usada
+    # pelo cert-init, evitando duplicação/divergência entre os dois).
+    env_file:
+      - .env
     volumes:
       - certbot_www:/var/www/certbot
       - certbot_certs:/etc/letsencrypt
     entrypoint: >
-      certbot certonly
-        --webroot
-        --webroot-path=/var/www/certbot
-        --non-interactive
-        --agree-tos
-        --email admin@velyonrobotics.com
-        -d velyonrobotics.com
-        -d www.velyonrobotics.com
-        -d fisioterapeuta.velyonrobotics.com
-        -d api.velyonrobotics.com
+      sh -c '
+        DOMAIN_ARGS="";
+        for d in $$(echo "$$DOMAINS" | tr "," " "); do
+          DOMAIN_ARGS="$$DOMAIN_ARGS -d $$d";
+        done;
+        certbot certonly
+          --webroot
+          --webroot-path=/var/www/certbot
+          --non-interactive
+          --agree-tos
+          --email "$$LETSENCRYPT_EMAIL"
+          $$DOMAIN_ARGS
+      '
     networks:
       - app_network
 
