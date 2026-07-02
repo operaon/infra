@@ -35,8 +35,15 @@ server {
     # Otimização SSL (Professional Standard)
     ssl_stapling on;
     ssl_stapling_verify on;
-    resolver 8.8.8.8 1.1.1.1 valid=300s;
-    resolver_timeout 5s;
+    # SEM 'resolver' aqui de propósito: um resolver declarado dentro do
+    # server{} sobrescreve o 'resolver 127.0.0.11 valid=10s;' herdado do
+    # http{} (nginx.conf) só para este bloco. Como 127.0.0.11 é o DNS
+    # embutido do Docker, ele resolve tanto os nomes internos dos
+    # containers (api, frontend, site — usados no proxy_pass via
+    # $api_upstream/$frontend_upstream) quanto nomes externos (ex.: o
+    # responder OCSP do stapling), pois repassa consultas desconhecidas
+    # pro DNS do host. Usar 8.8.8.8/1.1.1.1 aqui quebrava a resolução dos
+    # upstreams internos → 502 Bad Gateway.
     ssl_dhparam /etc/letsencrypt/dhparam.pem;
 
     include /etc/nginx/snippets/security-headers.conf;
@@ -75,8 +82,15 @@ server {
     # Otimização SSL (Professional Standard)
     ssl_stapling on;
     ssl_stapling_verify on;
-    resolver 8.8.8.8 1.1.1.1 valid=300s;
-    resolver_timeout 5s;
+    # SEM 'resolver' aqui de propósito: um resolver declarado dentro do
+    # server{} sobrescreve o 'resolver 127.0.0.11 valid=10s;' herdado do
+    # http{} (nginx.conf) só para este bloco. Como 127.0.0.11 é o DNS
+    # embutido do Docker, ele resolve tanto os nomes internos dos
+    # containers (api, frontend, site — usados no proxy_pass via
+    # $api_upstream/$frontend_upstream) quanto nomes externos (ex.: o
+    # responder OCSP do stapling), pois repassa consultas desconhecidas
+    # pro DNS do host. Usar 8.8.8.8/1.1.1.1 aqui quebrava a resolução dos
+    # upstreams internos → 502 Bad Gateway.
     ssl_dhparam /etc/letsencrypt/dhparam.pem;
 
     include /etc/nginx/snippets/security-headers.conf;
@@ -114,8 +128,15 @@ server {
     # Otimização SSL (Professional Standard)
     ssl_stapling on;
     ssl_stapling_verify on;
-    resolver 8.8.8.8 1.1.1.1 valid=300s;
-    resolver_timeout 5s;
+    # SEM 'resolver' aqui de propósito: um resolver declarado dentro do
+    # server{} sobrescreve o 'resolver 127.0.0.11 valid=10s;' herdado do
+    # http{} (nginx.conf) só para este bloco. Como 127.0.0.11 é o DNS
+    # embutido do Docker, ele resolve tanto os nomes internos dos
+    # containers (api, frontend, site — usados no proxy_pass via
+    # $api_upstream/$frontend_upstream) quanto nomes externos (ex.: o
+    # responder OCSP do stapling), pois repassa consultas desconhecidas
+    # pro DNS do host. Usar 8.8.8.8/1.1.1.1 aqui quebrava a resolução dos
+    # upstreams internos → 502 Bad Gateway.
     ssl_dhparam /etc/letsencrypt/dhparam.pem;
 
     include /etc/nginx/snippets/security-headers.conf;
