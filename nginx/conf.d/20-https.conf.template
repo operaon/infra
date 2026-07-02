@@ -16,6 +16,11 @@ server {
     http2 on;
     server_name velyonrobotics.com www.velyonrobotics.com;
 
+    # Resolvido dinamicamente a cada request (ver "resolver" em
+    # nginx.conf) em vez de upstream estático — sobrevive a
+    # recreate/restart do container "site".
+    set $site_upstream site:5174;
+
     ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
     ssl_trusted_certificate /etc/letsencrypt/live/velyonrobotics.com/chain.pem;
@@ -50,6 +55,12 @@ server {
     http2 on;
     server_name fisioterapeuta.velyonrobotics.com;
 
+    # Resolvidos dinamicamente a cada request (ver "resolver" em
+    # nginx.conf) em vez de upstream estático — sobrevive a
+    # recreate/restart dos containers "frontend" e "api".
+    set $frontend_upstream frontend:5173;
+    set $api_upstream api:3000;
+
     ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
     ssl_trusted_certificate /etc/letsencrypt/live/velyonrobotics.com/chain.pem;
@@ -83,6 +94,11 @@ server {
     listen 443 ssl;
     http2 on;
     server_name api.velyonrobotics.com;
+
+    # Resolvido dinamicamente a cada request (ver "resolver" em
+    # nginx.conf) em vez de upstream estático — sobrevive a
+    # recreate/restart do container "api".
+    set $api_upstream api:3000;
 
     ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
