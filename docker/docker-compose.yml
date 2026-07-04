@@ -252,18 +252,11 @@ services:
     expose:
       - "9000"
       - "9001"
-    # Publica 9000 (API S3) e 9001 (console) SÓ em loopback (127.0.0.1),
-    # nunca em 0.0.0.0 — mesmo racional do serviço "api" acima: este
-    # compose roda tanto local quanto em produção, e o MinIO usa
-    # credenciais padrão (minioadmin/minioadmin) via docker/.env, então
-    # nunca deve ficar acessível publicamente. Em produção o nginx
-    # continua sendo o único ponto de entrada externo; localmente, isso
-    # permite que o navegador acesse http://localhost:9000/... (URLs
-    # presigned/públicas geradas pelo storageService, ver
-    # MINIO_PUBLIC_ENDPOINT em docker/.env).
-    ports:
-      - "127.0.0.1:9000:9000"
-      - "127.0.0.1:9001:9001"
+    # Sem "ports:" de propósito — igual frontend/site: o MinIO nunca é
+    # acessado diretamente pelo navegador. O nginx faz proxy de /minio/
+    # para http://minio:9000 (ver $minio_upstream em conf.d/10-http.conf
+    # e 20-https.conf.template + snippets/tenant-locations.conf), mesmo
+    # padrão de $api_upstream/$frontend_upstream já usado no projeto.
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
