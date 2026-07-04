@@ -260,6 +260,14 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+      # Sem isso, o MinIO redireciona (307) qualquer requisição "estilo
+      # navegador" sem assinatura S3 válida para o console (porta 9001) —
+      # é exatamente o caso das logos públicas (uploadLogo com publicRead:
+      # true gera URL sem assinatura, ver storageService.js). Atrás do
+      # proxy nginx (/minio/), o Host repassado é o domínio público, então
+      # o redirect virava http://<dominio>:9001/, uma porta que não existe
+      # no host → ERR_CONNECTION_REFUSED no navegador.
+      MINIO_BROWSER_REDIRECT: "off"
     volumes:
       - minio_data:/minio_data
     networks:
