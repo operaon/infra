@@ -94,11 +94,16 @@ services:
           cpus: "1"
           memory: 512M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      # Usa CMD-SHELL para permitir operador || e forçar IPv4 explicitamente
+      # (algumas imagens resolvem localhost para ::1 primeiro). Aumenta
+      # start_period para dar mais tempo ao processo terminar migrações
+      # e conectar ao DB/Redis antes do Docker considerar o serviço unhealthy.
+      # Tenta IPv4 primeiro, cai para IPv6 (::1) se necessário.
+      test: ["CMD-SHELL", "curl --fail --show-error --max-time 5 --ipv4 http://127.0.0.1:3000/health || curl --fail --show-error --max-time 5 --ipv6 http://[::1]:3000/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 300s
 
   # ==================== Node.js Frontend Tenant ====================
   frontend:
