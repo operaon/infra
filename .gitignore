@@ -2,6 +2,11 @@
 *.log
 build.log
 
+# Logs de runtime do nginx (montados como volume, sempre divergem entre
+# ambientes/servidores — nunca devem ser versionados; ver incidente de
+# conflito de merge em nginx/logs/*.log no deploy de produção).
+nginx/logs/
+
 # Scripts SQL de debug/consulta manual avulsa
 docker/check_*.sql
 
