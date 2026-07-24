@@ -5,7 +5,7 @@
 # Emite os certificados Let's Encrypt pela primeira vez.
 #
 # PRÉ-REQUISITOS antes de rodar:
-#   1. DNS dos 4 domínios apontando para o IP do servidor
+#   1. DNS dos 5 domínios apontando para o IP do servidor
 #   2. Stack rodando com nginx em modo HTTP (sem HTTPS ainda)
 #      → suba só o nginx primeiro: docker compose up -d nginx
 #   3. Porta 80 acessível publicamente
@@ -39,6 +39,7 @@ docker compose -f "$COMPOSE_FILE" --profile certbot run --rm certbot \
         -d velyonrobotics.com \
         -d www.velyonrobotics.com \
         -d fisioterapeuta.velyonrobotics.com \
+        -d paciente.velyonrobotics.com \
         -d api.velyonrobotics.com
 
 echo ""

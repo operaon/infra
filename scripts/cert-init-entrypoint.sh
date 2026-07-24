@@ -7,7 +7,7 @@ set -e
 CERT_DIR="/etc/letsencrypt/live/velyonrobotics.com"
 DHPARAM_FILE="/etc/letsencrypt/dhparam.pem"
 EMAIL="${LETSENCRYPT_EMAIL:-admin@velyonrobotics.com}"
-DOMAINS="${DOMAINS:-velyonrobotics.com,www.velyonrobotics.com,fisioterapeuta.velyonrobotics.com,api.velyonrobotics.com}"
+DOMAINS="${DOMAINS:-velyonrobotics.com,www.velyonrobotics.com,fisioterapeuta.velyonrobotics.com,paciente.velyonrobotics.com,api.velyonrobotics.com}"
 WEBROOT_PATH="/var/www/certbot"
 
 # ---- 1. Geração de DHParam (Segurança Adicional) ----

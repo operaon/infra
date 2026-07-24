@@ -189,6 +189,50 @@ services:
       retries: 3
       start_period: 10s
 
+  # ==================== Node.js Frontend Client (Paciente) ====================
+  client:
+    image: client-frontend:latest
+    build:
+      context: ../../velyon_frontend_client
+      dockerfile: ../velyon_infra/docker/Dockerfile.client.prod
+      # VITE_API_BASE_URL propositalmente não definido, mesmo motivo do
+      # serviço "frontend": usa "/api" (relativo) por padrão, resolvendo
+      # sempre para o domínio que serviu a página
+      # (paciente.velyonrobotics.com/api/...) via proxy interno do nginx.
+    container_name: velyon_frontend_client
+    restart: always
+    # NODE_ENV, PORT e EXTERNAL_API_URL vêm todos do env_file abaixo —
+    # fonte única de verdade, mesmo padrão do serviço "frontend".
+    env_file:
+      - ../../velyon_frontend_client/.env
+    expose:
+      - 5175
+    volumes:
+      - ../../velyon_frontend_client/logs:/app/logs
+      - ../../velyon_frontend_client/tmp:/app/tmp
+    networks:
+      - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=client"
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1G
+        reservations:
+          cpus: "1"
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5175/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
   # ==================== Nginx Reverse Proxy ====================
   # Mesma imagem/config em produção e local. Se houver certificados SSL
   # válidos montados em /etc/letsencrypt (volume certbot_certs), o HTTPS
@@ -320,6 +364,8 @@ services:
       frontend:
         condition: service_healthy
       site:
+        condition: service_healthy
+      client:
         condition: service_healthy
     networks:
       - app_network
