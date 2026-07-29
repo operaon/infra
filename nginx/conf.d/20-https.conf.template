@@ -20,6 +20,7 @@ server {
     # nginx.conf) em vez de upstream estático — sobrevive a
     # recreate/restart do container "site".
     set $site_upstream site:5174;
+    set $api_upstream api:3000;
 
     ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
