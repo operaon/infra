@@ -14,7 +14,9 @@ COPY tsconfig.json vite.config.ts ./
 COPY tailwind.config.ts* ./
 
 ARG VITE_API_BASE_URL
+ARG VITE_CLARITY_PROJECT_ID
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ENV VITE_CLARITY_PROJECT_ID=${VITE_CLARITY_PROJECT_ID}
 
 RUN pnpm run build
 
