@@ -193,16 +193,18 @@ server {
 # ------------------------------------------------------------
 # chat.velyonrobotics.com → velyon_chat (Node.js + Socket.IO, porta 4000)
 # ------------------------------------------------------------
-# Mesmo padrão do HTTP: proxy reverso para host.docker.internal:4000.
-# O certificado SSL é o mesmo (velyonrobotics.com) pois chat é um
-# subdomínio — o SAN já cobre *.velyonrobotics.com se configurado.
+# Mesmo padrão do HTTP: proxy reverso para chat:4000 (service na rede
+# Docker interna). O certificado SSL é o mesmo (velyonrobotics.com)
+# pois chat é um subdomínio — o SAN já cobre chat.velyonrobotics.com.
 # ------------------------------------------------------------
 server {
     listen 443 ssl;
     http2 on;
     server_name chat.velyonrobotics.com;
 
-    set $chat_upstream host.docker.internal:4000;
+    # Nome do service no docker-compose.yml → Docker DNS resolve
+    # automaticamente. Sem upstream estático — usa variável + resolver.
+    set $chat_upstream chat:4000;
 
     ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;

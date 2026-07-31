@@ -369,6 +369,8 @@ services:
         condition: service_healthy
       client:
         condition: service_healthy
+      chat:
+        condition: service_healthy
     networks:
       - app_network
     logging:
@@ -399,6 +401,53 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+  # ==================== Node.js Chat Service ====================
+  # Serviço de chat em tempo real (Socket.IO). Usa o mesmo Redis e
+  # MinIO do velyon_infra (via rede Docker), e o mesmo banco PostgreSQL
+  # externo apontado pelo velyon_api. O Nginx faz proxy reverso para
+  # chat:4000 sob o domínio chat.velyonrobotics.com.
+  chat:
+    image: chat-service:latest
+    build:
+      context: ../../velyon_chat
+      dockerfile: ../velyon_infra/docker/Dockerfile.chat.prod
+    container_name: velyon_chat
+    restart: always
+    env_file:
+      - ../../velyon_chat/.env.production
+    expose:
+      - 4000
+    depends_on:
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - ../../velyon_chat/logs:/app/logs
+      - ../../velyon_chat/tmp:/app/tmp
+    networks:
+      - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=chat"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   # ==================== Certbot (Let's Encrypt) — renovação manual ====================
   # Usado apenas para RENOVAÇÃO periódica em produção (via cron +
