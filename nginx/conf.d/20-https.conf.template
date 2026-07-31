@@ -251,8 +251,8 @@ server {
     }
 
     # Health check
-    location /health {
-        proxy_pass http://$chat_upstream/health;
+    location /api/health {
+        proxy_pass http://$chat_upstream/api/health;
         proxy_connect_timeout 5s;
         proxy_read_timeout 5s;
     }
