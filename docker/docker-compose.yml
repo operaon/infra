@@ -158,6 +158,7 @@ services:
       dockerfile: ../velyon_infra/docker/Dockerfile.site.prod
       args:
         VITE_CLARITY_PROJECT_ID: ${VITE_CLARITY_PROJECT_ID:-}
+        VITE_CHAT_SERVICE_URL: ${VITE_CHAT_SERVICE_URL:-}
     container_name: velyon_site
     restart: always
     # NODE_ENV, PORT, SESSION_SECRET, CORS_ORIGIN etc. vêm todos do
