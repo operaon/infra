@@ -111,11 +111,13 @@ services:
     build:
       context: ../../velyon_frontend_tenant
       dockerfile: ../velyon_infra/docker/Dockerfile.frontend.prod
-      # VITE_API_BASE_URL propositalmente não definido: o frontend já
-      # usa "/api" (relativo) como padrão quando a variável não existe,
-      # resolvendo sempre para o mesmo domínio que serviu a página
-      # (fisioterapeuta.velyonrobotics.com/api/...) via proxy interno
-      # do nginx. A API nunca precisa de um domínio público próprio.
+      args:
+        # VITE_API_BASE_URL propositalmente não definido: o frontend já
+        # usa "/api" (relativo) como padrão quando a variável não existe,
+        # resolvendo sempre para o mesmo domínio que serviu a página
+        # (fisioterapeuta.velyonrobotics.com/api/...) via proxy interno
+        # do nginx. A API nunca precisa de um domínio público próprio.
+        VITE_CHAT_SERVICE_URL: ${VITE_CHAT_SERVICE_URL:-}
     container_name: velyon_frontend
     restart: always
     # NODE_ENV, PORT e EXTERNAL_API_URL vêm todos do env_file abaixo —
