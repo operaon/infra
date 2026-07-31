@@ -462,8 +462,6 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-      chat-db:
-        condition: service_healthy
     volumes:
       - ../../velyon_chat/logs:/app/logs
       - ../../velyon_chat/tmp:/app/tmp
