@@ -189,3 +189,71 @@ server {
 
     include /etc/nginx/snippets/api-locations.conf;
 }
+
+# ------------------------------------------------------------
+# chat.velyonrobotics.com → velyon_chat (Node.js + Socket.IO, porta 4000)
+# ------------------------------------------------------------
+# Mesmo padrão do HTTP: proxy reverso para host.docker.internal:4000.
+# O certificado SSL é o mesmo (velyonrobotics.com) pois chat é um
+# subdomínio — o SAN já cobre *.velyonrobotics.com se configurado.
+# ------------------------------------------------------------
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name chat.velyonrobotics.com;
+
+    set $chat_upstream host.docker.internal:4000;
+
+    ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+    ssl_session_tickets off;
+
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    ssl_dhparam /etc/letsencrypt/dhparam.pem;
+
+    include /etc/nginx/snippets/security-headers.conf;
+
+    access_log /var/log/nginx/access.log main;
+    error_log  /var/log/nginx/error.log warn;
+
+    # WebSocket (Socket.IO) — upgrade necessário para WSS
+    location /socket.io/ {
+        proxy_pass http://$chat_upstream/socket.io/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+    }
+
+    # REST API do chat
+    location /api/ {
+        proxy_pass http://$chat_upstream/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 60s;
+    }
+
+    # Health check
+    location /health {
+        proxy_pass http://$chat_upstream/health;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 5s;
+    }
+}
