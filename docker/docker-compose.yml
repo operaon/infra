@@ -1,5 +1,12 @@
 services:
-  # ==================== Redis Cache ====================
+  # ==================== Redis (cache + filas BullMQ) ====================
+  # Instância única compartilhada entre cache/sessão (velyon_api) e filas de
+  # jobs (velyon_chat, velyon_billing, etc). maxmemory-policy=noeviction:
+  # com allkeys-lru, o Redis descartava chaves silenciosamente sob pressão
+  # de memória, o que é aceitável para cache mas destrutivo para filas
+  # (perda de jobs sem erro visível). Com noeviction, ao atingir maxmemory
+  # os comandos de escrita retornam erro (OOM) em vez de apagar dados —
+  # mais seguro para as filas, mas exige monitorar o uso de memória.
   redis:
     image: redis:7-alpine
     container_name: velyon_redis
@@ -9,7 +16,7 @@ services:
     # $REDIS_PASSWORD acontece em runtime, pelo shell dentro do container.
     env_file:
       - ../../velyon_api/.env
-    command: sh -c 'redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD" --maxmemory 512mb --maxmemory-policy allkeys-lru'
+    command: sh -c 'redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD" --maxmemory 512mb --maxmemory-policy noeviction'
     expose:
       - "6379"
     volumes:
