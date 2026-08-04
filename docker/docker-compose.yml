@@ -382,6 +382,8 @@ services:
         condition: service_healthy
       catalog:
         condition: service_healthy
+      billing:
+        condition: service_healthy
     networks:
       - app_network
     logging:
@@ -650,22 +652,20 @@ services:
     env_file:
       - ../../velyon_billing/.env
     expose:
-      - "4600"
-    ports:
-      - "4600:4600"
+      - 4600
     depends_on:
       redis:
         condition: service_healthy
     volumes:
-      - billing_logs:/app/logs
-      - billing_tmp:/app/tmp
+      - ../../velyon_billing/logs:/app/logs
+      - ../../velyon_billing/tmp:/app/tmp
     networks:
       - app_network
     logging:
       driver: "json-file"
       options:
         max-size: "50m"
-        max-file: "3"
+        max-file: "5"
         labels: "service=billing"
     deploy:
       resources:
@@ -731,8 +731,7 @@ volumes:
   certbot_www:
   certbot_certs:
   minio_data:
-  billing_logs:
-  billing_tmp:
+  # (billing usa bind mounts, sem volumes nomeados)
 
 
 networks:

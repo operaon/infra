@@ -1,58 +1,42 @@
-# ─────────────────────────────────────────────────────────────────
-# velyon_billing — Production Dockerfile
-# Multi-stage build, non-root user, dumb-init, healthcheck
-# ─────────────────────────────────────────────────────────────────
-
-# ── Stage 1: Build ──────────────────────────────────────────────
+# ==================== STAGE 1: BUILDER ====================
 FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Install dumb-init
-RUN apk add --no-cache dumb-init
+COPY package*.json ./
 
-# Copy manifests
-COPY package.json package-lock.json* ./
+RUN npm install --omit=dev && npm cache clean --force
 
-# Install dependencies (production only)
-RUN npm ci --only=production --ignore-scripts
+COPY src ./src
 
-# Copy source
-COPY src/ ./src/
-
-# ── Stage 2: Runtime ────────────────────────────────────────────
+# ==================== STAGE 2: RUNTIME ====================
 FROM node:22-alpine
+
+LABEL maintainer="admin@velyonrobotics.com"
+LABEL version="1.0.0"
+LABEL description="Velyon Billing Service (Production)"
+LABEL org.opencontainers.image.source="https://github.com/velyon-homolog/velyon_billing"
 
 WORKDIR /app
 
-# Install Chromium for PDF generation + dumb-init
-RUN apk add --no-cache dumb-init chromium && \
-    addgroup -S appgroup && \
-    adduser -S appuser -G appgroup && \
-    chown -R appuser:appgroup /app
+RUN apk add --no-cache dumb-init curl
 
-# Copy built artifacts from builder
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/src ./src
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /usr/bin/dumb-init /usr/bin/dumb-init
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
 
-# Set environment
-ENV NODE_ENV=production
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+RUN mkdir -p /app/logs /app/tmp && \
+    chown -R nodejs:nodejs /app
 
-# Expose port
+COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nodejs:nodejs /app/src ./src
+COPY --chown=nodejs:nodejs package*.json ./
+
+USER nodejs
+
 EXPOSE 4600
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:4600/api/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:4600/api/health || exit 1
 
-# Create volumes for logs and temp files
-VOLUME ["/app/logs", "/app/tmp"]
-
-# Run as non-root with dumb-init for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]
-USER appuser
-
 CMD ["node", "src/server.js"]
