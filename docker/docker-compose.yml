@@ -405,50 +405,11 @@ services:
       retries: 3
       start_period: 10s
 
-  # ==================== PostgreSQL — Chat ====================
-  # Banco dedicado para o serviço de chat. Mantido separado do banco
-  # principal (velyon) para isolar schema, permitir backup/restauro
-  # independente e evitar conflitos de migração.
-  chat-db:
-    image: postgres:16-alpine
-    container_name: velyon_chat_db
-    restart: always
-    environment:
-      POSTGRES_DB: velyon_chat
-      POSTGRES_USER: velyon_chat
-      POSTGRES_PASSWORD: ${CHAT_DB_PASSWORD:-ChangeMeChat2026}
-    expose:
-      - "5432"
-    volumes:
-      - chat_db_data:/var/lib/postgresql/data
-    networks:
-      - app_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U velyon_chat -d velyon_chat"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "3"
-        labels: "service=chat-db"
-    deploy:
-      resources:
-        limits:
-          cpus: "1"
-          memory: 512M
-        reservations:
-          cpus: "0.5"
-          memory: 256M
-
   # ==================== Node.js Chat Service ====================
   # Serviço de chat em tempo real (Socket.IO). Usa o mesmo Redis e
-  # MinIO do velyon_infra (via rede Docker), e um PostgreSQL dedicado
-  # (chat-db). O Nginx faz proxy reverso para chat:4000 sob o domínio
-  # chat.velyonrobotics.com.
+  # MinIO do velyon_infra (via rede Docker). Banco PostgreSQL externo
+  # (177.223.51.25:6432) configurado via .env. O Nginx faz proxy reverso
+  # para chat:4000 sob o domínio chat.velyonrobotics.com.
   chat:
     image: chat-service:latest
     build:
@@ -457,7 +418,7 @@ services:
     container_name: velyon_chat
     restart: always
     env_file:
-      - ../../velyon_chat/.env.production
+      - ../../velyon_chat/.env
     expose:
       - 4000
     depends_on:
@@ -540,7 +501,7 @@ volumes:
   certbot_www:
   certbot_certs:
   minio_data:
-  chat_db_data:
+
 
 networks:
   app_network:
