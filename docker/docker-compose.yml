@@ -374,6 +374,14 @@ services:
         condition: service_healthy
       chat:
         condition: service_healthy
+      crm:
+        condition: service_healthy
+      pay:
+        condition: service_healthy
+      agend:
+        condition: service_healthy
+      catalog:
+        condition: service_healthy
     networks:
       - app_network
     logging:
@@ -447,6 +455,182 @@ services:
           memory: 256M
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ==================== Node.js CRM Service ====================
+  # Serviço de CRM (leads, automação, reminders). Banco PostgreSQL externo
+  # (177.223.51.25:6432) configurado via .env. Nginx faz proxy reverso
+  # para crm:4200 sob o domínio crm.velyonrobotics.com.
+  crm:
+    image: crm-service:latest
+    build:
+      context: ../../velyon_crm
+      dockerfile: ../velyon_infra/docker/Dockerfile.crm.prod
+    container_name: velyon_crm
+    restart: always
+    env_file:
+      - ../../velyon_crm/.env
+    expose:
+      - 4200
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../../velyon_crm/logs:/app/logs
+      - ../../velyon_crm/tmp:/app/tmp
+    networks:
+      - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=crm"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4200/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ==================== Node.js Pay Service ====================
+  # Serviço de pagamentos (Paytime, boletos, cartões). Banco PostgreSQL
+  # externo (177.223.51.25:6432) configurado via .env. Nginx faz proxy
+  # reverso para pay:4500 sob o domínio pay.velyonrobotics.com.
+  pay:
+    image: pay-service:latest
+    build:
+      context: ../../velyon_pay
+      dockerfile: ../velyon_infra/docker/Dockerfile.pay.prod
+    container_name: velyon_pay
+    restart: always
+    env_file:
+      - ../../velyon_pay/.env
+    expose:
+      - 4500
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../../velyon_pay/logs:/app/logs
+      - ../../velyon_pay/tmp:/app/tmp
+    networks:
+      - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=pay"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4500/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ==================== Node.js Agenda Service ====================
+  # Serviço de agendamentos e escalas. Banco PostgreSQL externo
+  # (177.223.51.25:6432) configurado via .env. Nginx faz proxy reverso
+  # para agend:4300 sob o domínio agend.velyonrobotics.com.
+  agend:
+    image: agend-service:latest
+    build:
+      context: ../../velyon_agend
+      dockerfile: ../velyon_infra/docker/Dockerfile.agend.prod
+    container_name: velyon_agend
+    restart: always
+    env_file:
+      - ../../velyon_agend/.env
+    expose:
+      - 4300
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../../velyon_agend/logs:/app/logs
+      - ../../velyon_agend/tmp:/app/tmp
+    networks:
+      - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=agend"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4300/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ==================== Node.js Catalog Service ====================
+  # Serviço de catálogo de produtos e preços. Banco PostgreSQL externo
+  # (177.223.51.25:6432) configurado via .env. Nginx faz proxy reverso
+  # para catalog:4400 sob o domínio catalog.velyonrobotics.com.
+  catalog:
+    image: catalog-service:latest
+    build:
+      context: ../../velyon_catalog
+      dockerfile: ../velyon_infra/docker/Dockerfile.catalog.prod
+    container_name: velyon_catalog
+    restart: always
+    env_file:
+      - ../../velyon_catalog/.env
+    expose:
+      - 4400
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ../../velyon_catalog/logs:/app/logs
+      - ../../velyon_catalog/tmp:/app/tmp
+    networks:
+      - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=catalog"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4400/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
