@@ -636,6 +636,52 @@ services:
       retries: 3
       start_period: 60s
 
+  # ==================== Node.js Billing Service ====================
+  # Serviço de faturamento (contratos, vendas, descontos, splits).
+  # Banco PostgreSQL externo (177.223.51.25:6432) configurado via .env.
+  # Nginx faz proxy reverso para billing:4600 sob billing.velyonrobotics.com.
+  billing:
+    image: billing-service:latest
+    build:
+      context: ../../velyon_billing
+      dockerfile: ../velyon_infra/docker/Dockerfile.billing.prod
+    container_name: velyon_billing
+    restart: always
+    env_file:
+      - ../../velyon_billing/.env
+    expose:
+      - "4600"
+    ports:
+      - "4600:4600"
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - billing_logs:/app/logs
+      - billing_tmp:/app/tmp
+    networks:
+      - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+        labels: "service=billing"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4600/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
   # ==================== Certbot (Let's Encrypt) — renovação manual ====================
   # Usado apenas para RENOVAÇÃO periódica em produção (via cron +
   # scripts/renew-certs.sh), com o nginx já rodando (método webroot).
@@ -685,6 +731,8 @@ volumes:
   certbot_www:
   certbot_certs:
   minio_data:
+  billing_logs:
+  billing_tmp:
 
 
 networks:
