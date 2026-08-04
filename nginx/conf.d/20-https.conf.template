@@ -62,93 +62,11 @@ server {
 }
 
 # ------------------------------------------------------------
-# fisioterapeuta.velyonrobotics.com → frontend (tenant app)
+# fisioterapeuta.velyonrobotics.com e paciente.velyonrobotics.com
+# foram removidos: tenant e client não usam mais subdomínio próprio,
+# só rota por path em velyonrobotics.com — ver /tenant/ e /client/
+# em nginx/snippets/site-locations.conf.
 # ------------------------------------------------------------
-server {
-    listen 443 ssl;
-    http2 on;
-    server_name fisioterapeuta.velyonrobotics.com;
-
-    # Resolvidos dinamicamente a cada request (ver "resolver" em
-    # nginx.conf) em vez de upstream estático — sobrevive a
-    # recreate/restart dos containers "frontend" e "api".
-    set $frontend_upstream frontend:5173;
-    set $api_upstream api:3000;
-    set $minio_upstream minio:9000;
-
-    ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
-
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-    ssl_prefer_server_ciphers on;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 10m;
-    ssl_session_tickets off;
-
-    # Otimização SSL (Professional Standard)
-    ssl_stapling on;
-    ssl_stapling_verify on;
-    # SEM 'resolver' aqui de propósito: um resolver declarado dentro do
-    # server{} sobrescreve o 'resolver 127.0.0.11 valid=10s;' herdado do
-    # http{} (nginx.conf) só para este bloco. Como 127.0.0.11 é o DNS
-    # embutido do Docker, ele resolve tanto os nomes internos dos
-    # containers (api, frontend, site — usados no proxy_pass via
-    # $api_upstream/$frontend_upstream) quanto nomes externos (ex.: o
-    # responder OCSP do stapling), pois repassa consultas desconhecidas
-    # pro DNS do host. Usar 8.8.8.8/1.1.1.1 aqui quebrava a resolução dos
-    # upstreams internos → 502 Bad Gateway.
-    ssl_dhparam /etc/letsencrypt/dhparam.pem;
-
-    include /etc/nginx/snippets/security-headers.conf;
-
-    access_log /var/log/nginx/access.log main;
-    error_log  /var/log/nginx/error.log warn;
-
-    include /etc/nginx/snippets/tenant-locations.conf;
-}
-
-# ------------------------------------------------------------
-# paciente.velyonrobotics.com → frontend (client/paciente app)
-# ------------------------------------------------------------
-server {
-    listen 443 ssl;
-    http2 on;
-    server_name paciente.velyonrobotics.com;
-
-    # Resolvidos dinamicamente a cada request (ver "resolver" em
-    # nginx.conf) em vez de upstream estático — sobrevive a
-    # recreate/restart dos containers "client" e "api".
-    set $client_upstream client:5175;
-    set $api_upstream api:3000;
-    set $minio_upstream minio:9000;
-
-    ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
-
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-    ssl_prefer_server_ciphers on;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 10m;
-    ssl_session_tickets off;
-
-    # Otimização SSL (Professional Standard)
-    ssl_stapling on;
-    ssl_stapling_verify on;
-    # SEM 'resolver' aqui de propósito: ver explicação nos outros blocos
-    # deste arquivo (herda o resolver do http{} em nginx.conf).
-    ssl_dhparam /etc/letsencrypt/dhparam.pem;
-
-    include /etc/nginx/snippets/security-headers.conf;
-
-    access_log /var/log/nginx/access.log main;
-    error_log  /var/log/nginx/error.log warn;
-
-    include /etc/nginx/snippets/client-locations.conf;
-}
 
 # ------------------------------------------------------------
 # api.velyonrobotics.com → API (Node.js)
