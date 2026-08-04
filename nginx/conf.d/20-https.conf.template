@@ -21,6 +21,12 @@ server {
     # recreate/restart do container "site".
     set $site_upstream site:5174;
     set $api_upstream api:3000;
+    set $tenant_upstream frontend:5173;
+    set $client_upstream client:5175;
+    set $chat_upstream chat:4000;
+    set $crm_upstream crm:4200;
+    set $pay_upstream pay:4500;
+    set $catalog_upstream catalog:4400;
 
     ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
