@@ -307,8 +307,12 @@ services:
     image: minio/minio:latest
     container_name: velyon_minio
     restart: always
-    env_file:
-      - .env
+    # Sem env_file aqui de propósito: o servidor MinIO só precisa das vars
+    # do bloco "environment:" abaixo (MINIO_ROOT_USER/PASSWORD). Um
+    # env_file: .env vazaria também MINIO_ACCESS_KEY/MINIO_SECRET_KEY (nomes
+    # depreciados, usados só pelo cliente SDK no velyon_api) pro processo do
+    # MinIO, que os detecta e emite o warning "MINIO_ACCESS_KEY and
+    # MINIO_SECRET_KEY are deprecated" mesmo com ROOT_USER/PASSWORD certos.
     command: server /minio_data --console-address ":9001"
     expose:
       - "9000"
