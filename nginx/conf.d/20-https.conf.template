@@ -27,6 +27,7 @@ server {
     set $crm_upstream crm:4200;
     set $pay_upstream pay:4500;
     set $catalog_upstream catalog:4400;
+    set $minio_upstream minio:9000;
 
     ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
