@@ -15,7 +15,7 @@ FROM node:22-alpine
 LABEL maintainer="admin@velyonrobotics.com"
 LABEL version="1.0.0"
 LABEL description="Velyon CRM Service (Production)"
-LABEL org.opencontainers.image.source="https://github.com/velyon-homolog/velyon_crm"
+LABEL org.opencontainers.image.source="https://github.com/operaon/crm"
 
 WORKDIR /app
 

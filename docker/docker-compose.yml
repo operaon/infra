@@ -478,20 +478,20 @@ services:
   crm:
     image: crm-service:latest
     build:
-      context: ../../velyon_crm
-      dockerfile: ../velyon_infra/docker/Dockerfile.crm.prod
+      context: ../../crm
+      dockerfile: docker/Dockerfile.crm.prod
     container_name: velyon_crm
     restart: always
     env_file:
-      - ../../velyon_crm/.env
+      - ../../crm/.env
     expose:
       - 4200
     depends_on:
       redis:
         condition: service_healthy
     volumes:
-      - ../../velyon_crm/logs:/app/logs
-      - ../../velyon_crm/tmp:/app/tmp
+      - ../../crm/logs:/app/logs
+      - ../../crm/tmp:/app/tmp
     networks:
       - app_network
     logging:
