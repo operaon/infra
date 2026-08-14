@@ -1,0 +1,21 @@
+repository: infra
+description: "Infraestrutura e documentação operacional da plataforma de módulos da Operaon."
+homepage: "https://github.com/operaon/infra"
+topics:
+  - operaon
+  - infrastructure
+  - devops
+  - docker
+  - deployment
+  - observability
+  - security
+custom_properties:
+  domain_owner: platform
+  repository_type: infra
+  lifecycle: active
+  documentation: docs/INDEX.md
+  security_tier: standard
+  default_branch: main
+notes:
+  - "Homepage uses the repository URL until an official public product URL is defined."
+  - "Stars, watchers, forks and audit history are GitHub-managed metrics and are not programmable repository content."
