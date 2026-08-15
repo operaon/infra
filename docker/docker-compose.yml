@@ -112,6 +112,48 @@ services:
       retries: 3
       start_period: 300s
 
+  # ==================== Node.js Branding & White-Label Service ====================
+  # Serviço de identidade visual, temas, domínios white-label e publicações.
+  # Os binários permanecem sob ownership do Media; o Branding armazena apenas
+  # referências e configuração publicada. Banco PostgreSQL dedicado definido
+  # em ../../branding/.env; o API acessa este serviço pela rede interna.
+  branding:
+    image: branding-service:latest
+    build:
+      context: ../../branding
+      dockerfile: ../infra/docker/Dockerfile.node.prod
+    container_name: operaon_branding
+    restart: always
+    env_file:
+      - ../../branding/.env
+    expose:
+      - 4800
+    volumes:
+      - ../../branding/logs:/app/logs
+      - ../../branding/tmp:/app/tmp
+    networks:
+      - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=branding"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4800/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
   # ==================== Node.js Frontend Tenant ====================
   frontend:
     image: tenant-frontend:latest

@@ -1,6 +1,6 @@
 # Operaon — Índice da documentação da organização
 
-Este documento é o mapa de documentação dos 21 repositórios da Operaon. Cada repositório mantém sua documentação local em "docs/INDEX.md". As decisões transversais são replicadas apenas como referência local; o código continua sendo a fonte executável.
+Este documento é o mapa de documentação dos 22 repositórios da Operaon. Cada repositório mantém sua documentação local em "docs/INDEX.md". As decisões transversais são replicadas apenas como referência local; o código continua sendo a fonte executável.
 
 ## Repositórios
 
@@ -19,13 +19,14 @@ Este documento é o mapa de documentação dos 21 repositórios da Operaon. Cada
 | [entitlements](https://github.com/operaon/entitlements) | module | Ledger de créditos, reserva, consumo, liberação e reembolso de sessões. | 4770 | [docs/INDEX.md](https://github.com/operaon/entitlements/blob/main/docs/INDEX.md) |
 | [equipment](https://github.com/operaon/equipment) | module | Equipamentos, número de série, QR Code, reserva, check-in, check-out, utilização e excedentes. | 4780 | [docs/INDEX.md](https://github.com/operaon/equipment/blob/main/docs/INDEX.md) |
 | [notification](https://github.com/operaon/notification) | module | Entrega de notificações e mensagens por canais autorizados. | 4720 | [docs/INDEX.md](https://github.com/operaon/notification/blob/main/docs/INDEX.md) |
-| [integration](https://github.com/operaon/integration) | module | Conectores externos, credenciais de integração, health checks e orquestração de integrações. | 4720 | [docs/INDEX.md](https://github.com/operaon/integration/blob/main/docs/INDEX.md) |
+| [integration](https://github.com/operaon/integration) | module | Conectores externos, credenciais de integração, health checks e orquestração de integrações. | 4730 | [docs/INDEX.md](https://github.com/operaon/integration/blob/main/docs/INDEX.md) |
 | [audit](https://github.com/operaon/audit) | module | Trilha imutável de auditoria administrativa, financeira, operacional e de segurança. | 4750 | [docs/INDEX.md](https://github.com/operaon/audit/blob/main/docs/INDEX.md) |
 | [reporting](https://github.com/operaon/reporting) | module | Read models, indicadores, relatórios e análises derivadas. | 4760 | [docs/INDEX.md](https://github.com/operaon/reporting/blob/main/docs/INDEX.md) |
-| [media](https://github.com/operaon/media) | module | Metadados, upload, download, objetos físicos e controle de arquivos. | 4770 | [docs/INDEX.md](https://github.com/operaon/media/blob/main/docs/INDEX.md) |
+| [media](https://github.com/operaon/media) | module | Metadados, upload, download, objetos físicos e controle de arquivos. | 4790 | [docs/INDEX.md](https://github.com/operaon/media/blob/main/docs/INDEX.md) |
 | [frontend_adm](https://github.com/operaon/frontend_adm) | frontend | Interface administrativa para operação de tenants, organizações, permissões e módulos autorizados. | 5173 | [docs/INDEX.md](https://github.com/operaon/frontend_adm/blob/main/docs/INDEX.md) |
 | [frontend_client](https://github.com/operaon/frontend_client) | frontend | Interface do cliente para agenda, serviços, pagamentos, arquivos e acompanhamento de solicitações. | 5175 | [docs/INDEX.md](https://github.com/operaon/frontend_client/blob/main/docs/INDEX.md) |
-| [frontend_site](https://github.com/operaon/frontend_site) | frontend | Site público, apresentação de serviços e entrada de jornadas públicas. | 5173 | [docs/INDEX.md](https://github.com/operaon/frontend_site/blob/main/docs/INDEX.md) |
+| [frontend_site](https://github.com/operaon/frontend_site) | frontend | Site público, apresentação de serviços e entrada de jornadas públicas. | 5174 | [docs/INDEX.md](https://github.com/operaon/frontend_site/blob/main/docs/INDEX.md) |
+| [branding](https://github.com/operaon/branding) | module | Identidade visual, temas, assets referenciados, domínios white-label, canais e publicações versionadas. | 4800 | [docs/INDEX.md](https://github.com/operaon/branding/blob/main/docs/INDEX.md) |
 | [infra](https://github.com/operaon/infra) | infra | Topologia de ambientes, rede, deploy, observabilidade, secrets, bancos e políticas operacionais. | — | [docs/INDEX.md](https://github.com/operaon/infra/blob/main/docs/INDEX.md) |
 
 ## Padrões
@@ -42,7 +43,7 @@ Todos os módulos e a API utilizam o contrato comum de headers e webhooks. A evo
 
 ## Inconsistências de ambiente identificadas
 
-A auditoria encontrou possíveis colisões nos templates atuais: Integration e Notification declaram `4720`; Entitlements e Media declaram `4770`; e Pay declara `4200` no template local, embora referências anteriores tenham usado `4500`. Esses valores devem ser reconciliados no inventário de deployment antes de um ambiente compartilhado.
+O inventário canônico atualiza Integration para `4730`, Media para `4790`, frontend_site para `5174` e Branding para `4800`. O Compose e os templates de ambiente devem permanecer sincronizados com esses valores; qualquer divergência deve bloquear o CI de infraestrutura.
 
 ## Referências
 
