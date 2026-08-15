@@ -154,6 +154,47 @@ services:
       retries: 3
       start_period: 60s
 
+  # ==================== Node.js Telemedicine & Virtual Care Service ====================
+  # Serviço standalone de sessões virtuais, consentimentos, participantes,
+  # gravações opt-in e webhooks assinados de provedores de vídeo.
+  # O banco e os segredos pertencem exclusivamente ao módulo Telemedicina.
+  telemedicine:
+    image: telemedicine-service:latest
+    build:
+      context: ../../telemedicine
+      dockerfile: ../infra/docker/Dockerfile.node.prod
+    container_name: operaon_telemedicine
+    restart: always
+    env_file:
+      - ../../telemedicine/.env
+    expose:
+      - 4810
+    volumes:
+      - ../../telemedicine/logs:/app/logs
+      - ../../telemedicine/tmp:/app/tmp
+    networks:
+      - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=telemedicine"
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4810/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
   # ==================== Node.js Frontend Tenant ====================
   frontend:
     image: tenant-frontend:latest
