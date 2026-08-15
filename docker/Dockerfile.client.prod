@@ -24,10 +24,10 @@ RUN pnpm run build
 # ==================== STAGE 2: RUNTIME ====================
 FROM node:20-alpine
 
-LABEL maintainer="seu-email@exemplo.com"
-LABEL version="1.0.0"
-LABEL description="Velyon - Frontend Client (Production)"
-LABEL org.opencontainers.image.source="https://github.com/velyon-homolog/velyon_frontend_client"
+LABEL org.opencontainers.image.title="Operaon Frontend Client"
+LABEL org.opencontainers.image.description="Operaon frontend client (production)"
+LABEL org.opencontainers.image.source="https://github.com/operaon/frontend_client"
+LABEL org.opencontainers.image.version="1.0.0"
 
 WORKDIR /app
 

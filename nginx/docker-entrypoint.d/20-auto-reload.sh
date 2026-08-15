@@ -1,18 +1,18 @@
 #!/bin/sh
-# nginx/docker-entrypoint.d/20-auto-reload.sh
-#
-# Monitora o arquivo de certificado e recarrega o Nginx se ele mudar.
-# Isso permite que o container cert-renew atualize o SSL sem downtime.
+# Script auxiliar opcional para recarga periódica do Nginx após renovação TLS.
+# Não é copiado pela imagem por padrão; a renovação oficial usa scripts/renew-certs.sh.
+set -eu
+
+DOMAIN="${DOMAIN:-$(printf '%s' "${DOMAINS:-operaon.local}" | cut -d',' -f1)}"
+CERT_NAME="${CERT_NAME:-$DOMAIN}"
+CERT_FILE="/etc/letsencrypt/live/$CERT_NAME/fullchain.pem"
 
 (
-while true; do
-    # Dorme por 24 horas antes de verificar
-    sleep 24h
-    
-    # Se o certificado existir, dá um reload suave no Nginx
-    if [ -f "/etc/letsencrypt/live/velyonrobotics.com/fullchain.pem" ]; then
-        echo "[auto-reload] Recarregando Nginx para garantir uso dos certificados mais recentes..."
-        nginx -s reload
-    fi
-done
+    while true; do
+        sleep 24h
+        if [ -f "$CERT_FILE" ]; then
+            echo "[auto-reload] Recarregando Nginx para aplicar o certificado mais recente..."
+            nginx -s reload
+        fi
+    done
 ) &

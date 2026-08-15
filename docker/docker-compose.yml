@@ -1,7 +1,7 @@
 services:
   # ==================== Redis (cache + filas BullMQ) ====================
-  # Instância única compartilhada entre cache/sessão (velyon_api) e filas de
-  # jobs (velyon_chat, velyon_billing, etc). maxmemory-policy=noeviction:
+  # Instância única compartilhada entre cache/sessão (operaon_api) e filas de
+  # jobs (operaon_chat, operaon_faturament, etc). maxmemory-policy=noeviction:
   # com allkeys-lru, o Redis descartava chaves silenciosamente sob pressão
   # de memória, o que é aceitável para cache mas destrutivo para filas
   # (perda de jobs sem erro visível). Com noeviction, ao atingir maxmemory
@@ -9,14 +9,14 @@ services:
   # mais seguro para as filas, mas exige monitorar o uso de memória.
   redis:
     image: redis:7-alpine
-    container_name: velyon_redis
+    container_name: operaon_redis
     restart: always
     # REDIS_PASSWORD vem do mesmo env_file usado pela api (fonte única de
     # verdade). $$ escapa o interpolador do Compose: a expansão real de
     # $REDIS_PASSWORD acontece em runtime, pelo shell dentro do container.
     env_file:
-      - ../../velyon_api/.env
-    command: sh -c 'redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD" --maxmemory 512mb --maxmemory-policy noeviction'
+      - ../../api/.env
+    command: sh -c 'test -n "$$REDIS_PASSWORD" || { echo "REDIS_PASSWORD is required" >&2; exit 1; }; exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD" --maxmemory 512mb --maxmemory-policy noeviction'
     expose:
       - "6379"
     volumes:
@@ -54,9 +54,9 @@ services:
   api:
     image: api-clinica:latest
     build:
-      context: ../../velyon_api
-      dockerfile: ../velyon_infra/docker/Dockerfile.api.prod
-    container_name: velyon_api
+      context: ../../api
+      dockerfile: ../infra/docker/Dockerfile.api.prod
+    container_name: operaon_api
     restart: always
     # NODE_ENV, PORT, DATABASE_URL, DATABASE_SSL, REDIS_URL, FRONTEND_URLS,
     # CORS_ORIGIN etc. vêm todos do env_file abaixo — fonte única de
@@ -67,12 +67,12 @@ services:
     # duplicação — ver docker/.env para o que ainda é exclusivo da infra
     # (REDIS_PASSWORD usado no comando do container redis).
     env_file:
-      - ../../velyon_api/.env
+      - ../../api/.env
     expose:
       - 3000
     # Publica 3000 SÓ em loopback (127.0.0.1), nunca em 0.0.0.0: permite
     # rodar o frontend local via `pnpm dev` (fora do Docker, ver
-    # velyon_frontend_tenant/.env.local.example) acessando a api
+    # frontend_adm/.env.local.example) acessando a api
     # dockerizada em http://localhost:3000, sem expor a api publicamente
     # — em produção o nginx continua sendo o único ponto de entrada
     # externo, via rede interna do Docker (http://api:3000).
@@ -82,8 +82,8 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ../../velyon_api/logs:/app/logs
-      - ../../velyon_api/tmp:/app/tmp
+      - ../../api/logs:/app/logs
+      - ../../api/tmp:/app/tmp
     networks:
       - app_network
     logging:
@@ -116,25 +116,25 @@ services:
   frontend:
     image: tenant-frontend:latest
     build:
-      context: ../../velyon_frontend_tenant
-      dockerfile: ../velyon_infra/docker/Dockerfile.frontend.prod
+      context: ../../frontend_adm
+      dockerfile: ../infra/docker/Dockerfile.frontend.prod
       args:
         # VITE_API_BASE_URL propositalmente não definido: o frontend já
         # usa "/api" (relativo) como padrão quando a variável não existe,
         # resolvendo sempre para o mesmo domínio que serviu a página
-        # (fisioterapeuta.velyonrobotics.com/api/...) via proxy interno
+        # (domínio principal/api/...) via proxy interno
         # do nginx. A API nunca precisa de um domínio público próprio.
-    container_name: velyon_frontend
+    container_name: operaon_frontend_adm
     restart: always
     # NODE_ENV, PORT e EXTERNAL_API_URL vêm todos do env_file abaixo —
     # fonte única de verdade, sem duplicação/hardcode aqui no compose.
     env_file:
-      - ../../velyon_frontend_tenant/.env
+      - ../../frontend_adm/.env
     expose:
       - 5173
     volumes:
-      - ../../velyon_frontend_tenant/logs:/app/logs
-      - ../../velyon_frontend_tenant/tmp:/app/tmp
+      - ../../frontend_adm/logs:/app/logs
+      - ../../frontend_adm/tmp:/app/tmp
     networks:
       - app_network
     logging:
@@ -162,17 +162,17 @@ services:
   site:
     image: site-frontend:latest
     build:
-      context: ../../velyon_frontend_site
-      dockerfile: ../velyon_infra/docker/Dockerfile.site.prod
+      context: ../../frontend_site
+      dockerfile: ../infra/docker/Dockerfile.site.prod
       args:
         VITE_CLARITY_PROJECT_ID: ${VITE_CLARITY_PROJECT_ID:-}
-    container_name: velyon_site
+    container_name: operaon_frontend_site
     restart: always
     # NODE_ENV, PORT, SESSION_SECRET, CORS_ORIGIN etc. vêm todos do
     # env_file abaixo — antes este serviço não tinha env_file nenhum e
-    # o velyon_frontend_site/.env não era efetivamente usado no build/run.
+    # o frontend_site/.env não era efetivamente usado no build/run.
     env_file:
-      - ../../velyon_frontend_site/.env
+      - ../../frontend_site/.env
     expose:
       - 5174
     networks:
@@ -203,23 +203,23 @@ services:
   client:
     image: client-frontend:latest
     build:
-      context: ../../velyon_frontend_client
-      dockerfile: ../velyon_infra/docker/Dockerfile.client.prod
+      context: ../../frontend_client
+      dockerfile: ../infra/docker/Dockerfile.client.prod
       # VITE_API_BASE_URL propositalmente não definido, mesmo motivo do
       # serviço "frontend": usa "/api" (relativo) por padrão, resolvendo
       # sempre para o domínio que serviu a página
-      # (paciente.velyonrobotics.com/api/...) via proxy interno do nginx.
-    container_name: velyon_frontend_client
+      # (domínio principal/api/...) via proxy interno do nginx.
+    container_name: operaon_frontend_client
     restart: always
     # NODE_ENV, PORT e EXTERNAL_API_URL vêm todos do env_file abaixo —
     # fonte única de verdade, mesmo padrão do serviço "frontend".
     env_file:
-      - ../../velyon_frontend_client/.env
+      - ../../frontend_client/.env
     expose:
       - 5175
     volumes:
-      - ../../velyon_frontend_client/logs:/app/logs
-      - ../../velyon_frontend_client/tmp:/app/tmp
+      - ../../frontend_client/logs:/app/logs
+      - ../../frontend_client/tmp:/app/tmp
     networks:
       - app_network
     logging:
@@ -261,8 +261,8 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.certinit
-    image: velyon-cert-init:latest
-    container_name: velyon_cert_init
+    image: operaon-cert-init:latest
+    container_name: operaon_cert_init
     restart: "no"
     # LETSENCRYPT_EMAIL e DOMAINS vêm do docker/.env (exclusivo da infra,
     # não pertence a nenhum app específico).
@@ -291,8 +291,8 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.certrenew
-    image: velyon-cert-renew:latest
-    container_name: velyon_cert_renew
+    image: operaon-cert-renew:latest
+    container_name: operaon_cert_renew
     restart: always
     volumes:
       - certbot_www:/var/www/certbot
@@ -303,12 +303,12 @@ services:
   # ==================== MinIO (Object Storage) ====================
   minio:
     image: minio/minio:latest
-    container_name: velyon_minio
+    container_name: operaon_minio
     restart: always
     # Sem env_file aqui de propósito: o servidor MinIO só precisa das vars
     # do bloco "environment:" abaixo (MINIO_ROOT_USER/PASSWORD). Um
     # env_file: .env vazaria também MINIO_ACCESS_KEY/MINIO_SECRET_KEY (nomes
-    # depreciados, usados só pelo cliente SDK no velyon_api) pro processo do
+    # depreciados, usados só pelo cliente SDK no operaon_api) pro processo do
     # MinIO, que os detecta e emite o warning "MINIO_ACCESS_KEY and
     # MINIO_SECRET_KEY are deprecated" mesmo com ROOT_USER/PASSWORD certos.
     command: server /minio_data --console-address ":9001"
@@ -321,8 +321,8 @@ services:
     # e 20-https.conf.template + snippets/tenant-locations.conf), mesmo
     # padrão de $api_upstream/$frontend_upstream já usado no projeto.
     environment:
-      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER must be set}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD must be set}
       # Sem isso, o MinIO redireciona (307) qualquer requisição "estilo
       # navegador" sem assinatura S3 válida para o console (porta 9001) —
       # é exatamente o caso das logos públicas (uploadLogo com publicRead:
@@ -357,11 +357,13 @@ services:
           memory: 1G
 
   nginx:
+    env_file:
+      - .env
     build:
       context: ..
       dockerfile: docker/Dockerfile.nginx
     image: app-nginx:latest
-    container_name: velyon_nginx
+    container_name: operaon_nginx
     restart: always
     ports:
       - "80:80"
@@ -391,7 +393,7 @@ services:
         condition: service_healthy
       catalog:
         condition: service_healthy
-      billing:
+      faturament:
         condition: service_healthy
     networks:
       - app_network
@@ -426,18 +428,18 @@ services:
 
   # ==================== Node.js Chat Service ====================
   # Serviço de chat em tempo real (Socket.IO). Usa o mesmo Redis e
-  # MinIO do velyon_infra (via rede Docker). Banco PostgreSQL externo
+  # MinIO do operaon_infra (via rede Docker). Banco PostgreSQL externo
   # (177.223.51.25:6432) configurado via .env. O Nginx faz proxy reverso
   # para chat:4000 sob o domínio chat.velyonrobotics.com.
   chat:
     image: chat-service:latest
     build:
-      context: ../../velyon_chat
-      dockerfile: ../velyon_infra/docker/Dockerfile.chat.prod
-    container_name: velyon_chat
+      context: ../../chat
+      dockerfile: ../infra/docker/Dockerfile.chat.prod
+    container_name: operaon_chat
     restart: always
     env_file:
-      - ../../velyon_chat/.env
+      - ../../chat/.env
     expose:
       - 4000
     depends_on:
@@ -446,8 +448,8 @@ services:
       minio:
         condition: service_healthy
     volumes:
-      - ../../velyon_chat/logs:/app/logs
-      - ../../velyon_chat/tmp:/app/tmp
+      - ../../chat/logs:/app/logs
+      - ../../chat/tmp:/app/tmp
     networks:
       - app_network
     logging:
@@ -474,18 +476,18 @@ services:
   # ==================== Node.js CRM Service ====================
   # Serviço de CRM (leads, automação, reminders). Banco PostgreSQL externo
   # (177.223.51.25:6432) configurado via .env. Nginx faz proxy reverso
-  # para crm:4200 sob o domínio crm.velyonrobotics.com.
+  # para crm:4100 sob o domínio crm.velyonrobotics.com.
   crm:
     image: crm-service:latest
     build:
       context: ../../crm
-      dockerfile: docker/Dockerfile.crm.prod
-    container_name: velyon_crm
+      dockerfile: ../infra/docker/Dockerfile.crm.prod
+    container_name: operaon_crm
     restart: always
     env_file:
       - ../../crm/.env
     expose:
-      - 4200
+      - 4100
     depends_on:
       redis:
         condition: service_healthy
@@ -509,7 +511,7 @@ services:
           cpus: "0.5"
           memory: 256M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4200/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:4100/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -518,18 +520,18 @@ services:
   # ==================== Node.js Pay Service ====================
   # Serviço de pagamentos (Paytime, boletos, cartões). Banco PostgreSQL
   # externo (177.223.51.25:6432) configurado via .env. Nginx faz proxy
-  # reverso para pay:4500 sob o domínio pay.velyonrobotics.com.
+  # reverso para pay:4200 sob o domínio pay.velyonrobotics.com.
   pay:
     image: pay-service:latest
     build:
       context: ../../pay
-      dockerfile: docker/Dockerfile.pay.prod
-    container_name: velyon_pay
+      dockerfile: ../infra/docker/Dockerfile.pay.prod
+    container_name: operaon_pay
     restart: always
     env_file:
       - ../../pay/.env
     expose:
-      - 4500
+      - 4200
     depends_on:
       redis:
         condition: service_healthy
@@ -553,7 +555,7 @@ services:
           cpus: "0.5"
           memory: 256M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4500/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:4200/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -566,20 +568,20 @@ services:
   agend:
     image: agend-service:latest
     build:
-      context: ../../velyon_agend
-      dockerfile: ../velyon_infra/docker/Dockerfile.agend.prod
-    container_name: velyon_agend
+      context: ../../agend
+      dockerfile: ../infra/docker/Dockerfile.agend.prod
+    container_name: operaon_agend
     restart: always
     env_file:
-      - ../../velyon_agend/.env
+      - ../../agend/.env
     expose:
       - 4300
     depends_on:
       redis:
         condition: service_healthy
     volumes:
-      - ../../velyon_agend/logs:/app/logs
-      - ../../velyon_agend/tmp:/app/tmp
+      - ../../agend/logs:/app/logs
+      - ../../agend/tmp:/app/tmp
     networks:
       - app_network
     logging:
@@ -610,20 +612,20 @@ services:
   catalog:
     image: catalog-service:latest
     build:
-      context: ../../velyon_catalog
-      dockerfile: ../velyon_infra/docker/Dockerfile.catalog.prod
-    container_name: velyon_catalog
+      context: ../../catalog
+      dockerfile: ../infra/docker/Dockerfile.catalog.prod
+    container_name: operaon_catalog
     restart: always
     env_file:
-      - ../../velyon_catalog/.env
+      - ../../catalog/.env
     expose:
       - 4400
     depends_on:
       redis:
         condition: service_healthy
     volumes:
-      - ../../velyon_catalog/logs:/app/logs
-      - ../../velyon_catalog/tmp:/app/tmp
+      - ../../catalog/logs:/app/logs
+      - ../../catalog/tmp:/app/tmp
     networks:
       - app_network
     logging:
@@ -647,27 +649,27 @@ services:
       retries: 3
       start_period: 60s
 
-  # ==================== Node.js Billing Service ====================
+  # ==================== Node.js Faturament Service ====================
   # Serviço de faturamento (contratos, vendas, descontos, splits).
   # Banco PostgreSQL externo (177.223.51.25:6432) configurado via .env.
-  # Nginx faz proxy reverso para billing:4600 sob billing.velyonrobotics.com.
-  billing:
-    image: billing-service:latest
+  # Nginx faz proxy reverso para faturament:4600 sob faturament.velyonrobotics.com.
+  faturament:
+    image: faturament-service:latest
     build:
-      context: ../../velyon_billing
-      dockerfile: ../velyon_infra/docker/Dockerfile.billing.prod
-    container_name: velyon_billing
+      context: ../../faturament
+      dockerfile: ../infra/docker/Dockerfile.billing.prod
+    container_name: operaon_faturament
     restart: always
     env_file:
-      - ../../velyon_billing/.env
+      - ../../faturament/.env
     expose:
       - 4600
     depends_on:
       redis:
         condition: service_healthy
     volumes:
-      - ../../velyon_billing/logs:/app/logs
-      - ../../velyon_billing/tmp:/app/tmp
+      - ../../faturament/logs:/app/logs
+      - ../../faturament/tmp:/app/tmp
     networks:
       - app_network
     logging:
@@ -675,7 +677,7 @@ services:
       options:
         max-size: "50m"
         max-file: "5"
-        labels: "service=billing"
+        labels: "service=faturament"
     deploy:
       resources:
         limits:
@@ -700,7 +702,7 @@ services:
   # Em ambiente local, simplesmente nunca é executado.
   certbot:
     image: certbot/certbot:v5.5.0
-    container_name: velyon_certbot
+    container_name: operaon_certbot
     restart: "no"
     # profile próprio: NÃO sobe com "docker compose up" (mesmo sem -d
     # ou --build). Só roda quando chamado explicitamente com
@@ -740,7 +742,7 @@ volumes:
   certbot_www:
   certbot_certs:
   minio_data:
-  # (billing usa bind mounts, sem volumes nomeados)
+  # (faturament usa bind mounts, sem volumes nomeados)
 
 
 networks:

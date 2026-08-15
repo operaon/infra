@@ -12,10 +12,10 @@ COPY src ./src
 # ==================== STAGE 2: RUNTIME ====================
 FROM node:22-alpine
 
-LABEL maintainer="admin@velyonrobotics.com"
-LABEL version="1.0.0"
-LABEL description="Velyon Billing Service (Production)"
-LABEL org.opencontainers.image.source="https://github.com/velyon-homolog/velyon_billing"
+LABEL org.opencontainers.image.title="Operaon Faturament Service"
+LABEL org.opencontainers.image.description="Operaon Faturament service (production)"
+LABEL org.opencontainers.image.source="https://github.com/operaon/faturament"
+LABEL org.opencontainers.image.version="1.0.0"
 
 WORKDIR /app
 

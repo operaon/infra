@@ -1,0 +1,28 @@
+# Imagem base para serviços Node.js standalone Operaon.
+# O contexto de build deve ser o repositório do módulo.
+FROM node:20.19.4-alpine3.21 AS runtime
+
+ENV NODE_ENV=production
+WORKDIR /app
+
+RUN apk add --no-cache curl dumb-init \
+  && addgroup -S --gid 10001 operaon \
+  && adduser -S --uid 10001 --ingroup operaon operaon
+
+COPY package*.json ./
+RUN if [ -f package-lock.json ]; then npm ci --omit=dev --ignore-scripts; else npm install --omit=dev --ignore-scripts; fi \
+  && npm cache clean --force
+
+COPY --chown=operaon:operaon src ./src
+
+RUN mkdir -p /app/logs /app/tmp \
+  && chown -R operaon:operaon /app
+
+USER 10001:10001
+
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD curl --fail --silent --show-error http://127.0.0.1:${PORT:-3000}/health || exit 1
+
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "src/server.js"]

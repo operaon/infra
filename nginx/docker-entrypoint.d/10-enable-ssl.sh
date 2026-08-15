@@ -9,13 +9,15 @@
 # servindo tudo em HTTP simples (porta 80) — sem erro, sem travar o boot.
 set -e
 
-CERT_DIR="/etc/letsencrypt/live/velyonrobotics.com"
+DOMAIN="${DOMAIN:-$(printf '%s' "${DOMAINS:-operaon.local}" | cut -d',' -f1)}"
+CERT_NAME="${CERT_NAME:-$DOMAIN}"
+CERT_DIR="/etc/letsencrypt/live/$CERT_NAME"
 TEMPLATE="/etc/nginx/conf.d/20-https.conf.template"
 TARGET="/etc/nginx/conf.d/20-https.conf"
 
 if [ -f "$CERT_DIR/fullchain.pem" ] && [ -f "$CERT_DIR/privkey.pem" ]; then
     echo "[10-enable-ssl] Certificado SSL encontrado em $CERT_DIR — habilitando HTTPS (porta 443)."
-    cp "$TEMPLATE" "$TARGET"
+    sed "s|__CERT_NAME__|$CERT_NAME|g" "$TEMPLATE" > "$TARGET"
 else
     echo "[10-enable-ssl] Nenhum certificado SSL encontrado — servindo apenas HTTP (porta 80)."
     rm -f "$TARGET"

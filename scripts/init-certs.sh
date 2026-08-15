@@ -1,60 +1,68 @@
-#!/bin/bash
-# =============================================================
-# scripts/init-certs.sh
-#
-# Emite os certificados Let's Encrypt pela primeira vez.
-#
-# PRÉ-REQUISITOS antes de rodar:
-#   1. DNS dos 5 domínios apontando para o IP do servidor
-#   2. Stack rodando com nginx em modo HTTP (sem HTTPS ainda)
-#      → suba só o nginx primeiro: docker compose up -d nginx
-#   3. Porta 80 acessível publicamente
-#
-# Uso:
-#   chmod +x scripts/init-certs.sh
-#   ./scripts/init-certs.sh
-# =============================================================
-
+#!/usr/bin/env bash
+# Emite o certificado Let's Encrypt inicial para o stack Operaon.
+# A configuração é lida de docker/.env; nenhum domínio fica hardcoded aqui.
 set -euo pipefail
 
-COMPOSE_FILE="/opt/velyon/velyon_infra/docker/docker-compose.yml"
-EMAIL="admin@velyonrobotics.com"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd)"
+COMPOSE_FILE="${COMPOSE_FILE:-$REPO_ROOT/docker/docker-compose.yml}"
+ENV_FILE="${ENV_FILE:-$REPO_ROOT/docker/.env}"
 
-echo "=== [init-certs] Verificando se o nginx está rodando..."
-docker compose -f "$COMPOSE_FILE" ps nginx | grep -q "running" || {
-    echo "ERRO: o container nginx não está rodando. Suba-o antes:"
-    echo "  docker compose -f $COMPOSE_FILE up -d nginx"
+[ -f "$ENV_FILE" ] || {
+    echo "ERRO: arquivo de ambiente não encontrado: $ENV_FILE" >&2
+    echo "Copie docker/.env.example para docker/.env e preencha os valores de runtime." >&2
     exit 1
 }
 
-echo "=== [init-certs] Emitindo certificado via Let's Encrypt (webroot)..."
+set -a
+# shellcheck disable=SC1090
+. "$ENV_FILE"
+set +a
 
-docker compose -f "$COMPOSE_FILE" --profile certbot run --rm certbot \
+DOMAINS="${DOMAINS:-}"
+LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL:-}"
+DOMAIN="${DOMAIN:-$(printf '%s' "$DOMAINS" | cut -d',' -f1 | tr -d '[:space:]')}"
+CERT_NAME="${CERT_NAME:-$DOMAIN}"
+
+[ -n "$DOMAINS" ] || { echo "ERRO: DOMAINS deve ser definido em $ENV_FILE" >&2; exit 1; }
+[ -n "$LETSENCRYPT_EMAIL" ] || { echo "ERRO: LETSENCRYPT_EMAIL deve ser definido em $ENV_FILE" >&2; exit 1; }
+[ -n "$CERT_NAME" ] || { echo "ERRO: CERT_NAME deve ser definido ou derivável de DOMAINS" >&2; exit 1; }
+
+DOMAIN_ARGS=()
+OLD_IFS="$IFS"
+IFS=','
+for domain in $DOMAINS; do
+    domain="$(printf '%s' "$domain" | tr -d '[:space:]')"
+    [ -n "$domain" ] || continue
+    DOMAIN_ARGS+=( -d "$domain" )
+done
+IFS="$OLD_IFS"
+[ "${#DOMAIN_ARGS[@]}" -gt 0 ] || { echo "ERRO: DOMAINS não contém domínios válidos" >&2; exit 1; }
+
+echo "=== [init-certs] Verificando se o nginx está rodando..."
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps nginx | grep -q "running" || {
+    echo "ERRO: o container nginx não está rodando. Suba-o antes:" >&2
+    echo "  docker compose --env-file $ENV_FILE -f $COMPOSE_FILE up -d nginx" >&2
+    exit 1
+}
+
+echo "=== [init-certs] Emitindo certificado $CERT_NAME para: $DOMAINS"
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" --profile certbot run --rm certbot \
     certbot certonly \
         --webroot \
         --webroot-path=/var/www/certbot \
         --non-interactive \
         --agree-tos \
-        --email "$EMAIL" \
-        -d velyonrobotics.com \
-        -d www.velyonrobotics.com \
-        -d fisioterapeuta.velyonrobotics.com \
-        -d paciente.velyonrobotics.com \
-        -d api.velyonrobotics.com
+        --email "$LETSENCRYPT_EMAIL" \
+        --cert-name "$CERT_NAME" \
+        "${DOMAIN_ARGS[@]}"
 
-echo ""
-echo "=== [init-certs] Certificado emitido com sucesso!"
-echo ""
-echo "Próximos passos:"
-echo "  1. O cert está em: /etc/letsencrypt/live/velyonrobotics.com/"
-echo "     (dentro do volume Docker 'certbot_certs')"
-echo ""
-echo "  2. Recrie o container do nginx para ele detectar o certificado"
-echo "     e habilitar HTTPS automaticamente (um simples 'reload' NÃO"
-echo "     basta, pois a detecção roda no boot do container):"
-echo "     docker compose -f $COMPOSE_FILE up -d --force-recreate nginx"
-echo ""
-echo "  3. Instale o cron de renovação automática no host:"
-echo "     crontab -e"
-echo "     Adicione a linha:"
-echo "     0 3,15 * * * /opt/velyon/velyon_infra/scripts/renew-certs.sh >> /var/log/velyon-renew.log 2>&1"
+echo
+echo "=== [init-certs] Certificado emitido com sucesso."
+echo "O certificado está em /etc/letsencrypt/live/$CERT_NAME/ dentro do volume Docker certbot_certs."
+echo
+echo "Recrie o nginx para que o entrypoint detecte o certificado:"
+echo "  docker compose --env-file $ENV_FILE -f $COMPOSE_FILE up -d --force-recreate nginx"
+echo
+echo "Para renovação automática no host, agende:"
+echo "  $REPO_ROOT/scripts/renew-certs.sh"

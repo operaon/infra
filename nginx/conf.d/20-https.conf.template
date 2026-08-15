@@ -1,6 +1,6 @@
 # ============================================================
 # HTTPS (porta 443) — habilitado automaticamente apenas quando
-# /etc/letsencrypt/live/velyonrobotics.com/{fullchain,privkey}.pem
+# /etc/letsencrypt/live/__CERT_NAME__/{fullchain,privkey}.pem
 # existem (ver nginx/docker-entrypoint.d/10-enable-ssl.sh).
 #
 # Este arquivo termina em ".template" de propósito: o Nginx só
@@ -24,14 +24,14 @@ server {
     set $tenant_upstream frontend:5173;
     set $client_upstream client:5175;
     set $chat_upstream chat:4000;
-    set $crm_upstream crm:4200;
-    set $pay_upstream pay:4500;
+    set $crm_upstream crm:4100;
+    set $pay_upstream pay:4200;
     set $catalog_upstream catalog:4400;
     set $minio_upstream minio:9000;
 
-    ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
+    ssl_certificate     /etc/letsencrypt/live/__CERT_NAME__/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/__CERT_NAME__/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/__CERT_NAME__/fullchain.pem;
 
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
@@ -63,9 +63,8 @@ server {
 }
 
 # ------------------------------------------------------------
-# fisioterapeuta.velyonrobotics.com e paciente.velyonrobotics.com
-# foram removidos: tenant e client não usam mais subdomínio próprio,
-# só rota por path em velyonrobotics.com — ver /tenant/ e /client/
+# Os subdomínios dedicados de tenant e client foram removidos;
+# ambos usam rotas por path em velyonrobotics.com — ver /tenant/ e /client/
 # em nginx/snippets/site-locations.conf.
 # ------------------------------------------------------------
 
@@ -82,9 +81,9 @@ server {
     # recreate/restart do container "api".
     set $api_upstream api:3000;
 
-    ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
+    ssl_certificate     /etc/letsencrypt/live/__CERT_NAME__/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/__CERT_NAME__/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/__CERT_NAME__/fullchain.pem;
 
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
@@ -116,10 +115,10 @@ server {
 }
 
 # ------------------------------------------------------------
-# chat.velyonrobotics.com → velyon_chat (Node.js + Socket.IO, porta 4000)
+# chat.velyonrobotics.com → Operaon Chat (Node.js + Socket.IO, porta 4000)
 # ------------------------------------------------------------
-# Mesmo padrão do HTTP: proxy reverso para chat:4000 (service na rede
-# Docker interna). O certificado SSL é o mesmo (velyonrobotics.com)
+# Mesmo padrão do HTTP: proxy reverso para chat:4000 (serviço na rede
+# Docker interna). O certificado SSL é o mesmo (domínio principal)
 # pois chat é um subdomínio — o SAN já cobre chat.velyonrobotics.com.
 # ------------------------------------------------------------
 server {
@@ -131,9 +130,9 @@ server {
     # automaticamente. Sem upstream estático — usa variável + resolver.
     set $chat_upstream chat:4000;
 
-    ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
+    ssl_certificate     /etc/letsencrypt/live/__CERT_NAME__/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/__CERT_NAME__/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/__CERT_NAME__/fullchain.pem;
 
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
@@ -186,11 +185,11 @@ server {
     http2 on;
     server_name crm.velyonrobotics.com;
 
-    set $crm_upstream crm:4200;
+    set $crm_upstream crm:4100;
 
-    ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
+    ssl_certificate     /etc/letsencrypt/live/__CERT_NAME__/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/__CERT_NAME__/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/__CERT_NAME__/fullchain.pem;
 
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
@@ -227,11 +226,11 @@ server {
     http2 on;
     server_name pay.velyonrobotics.com;
 
-    set $pay_upstream pay:4500;
+    set $pay_upstream pay:4200;
 
-    ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
+    ssl_certificate     /etc/letsencrypt/live/__CERT_NAME__/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/__CERT_NAME__/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/__CERT_NAME__/fullchain.pem;
 
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
@@ -270,9 +269,9 @@ server {
 
     set $agend_upstream agend:4300;
 
-    ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
+    ssl_certificate     /etc/letsencrypt/live/__CERT_NAME__/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/__CERT_NAME__/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/__CERT_NAME__/fullchain.pem;
 
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
@@ -311,9 +310,9 @@ server {
 
     set $catalog_upstream catalog:4400;
 
-    ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
+    ssl_certificate     /etc/letsencrypt/live/__CERT_NAME__/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/__CERT_NAME__/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/__CERT_NAME__/fullchain.pem;
 
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
@@ -342,20 +341,20 @@ server {
     }
 }
 # ------------------------------------------------------------
-# billing.velyonrobotics.com → velyon_billing (Node.js, porta 4600)
+# faturament.velyonrobotics.com → faturament (Node.js, porta 4600)
 # ------------------------------------------------------------
 # Serviço de faturamento (contratos, vendas, descontos, splits).
 # ------------------------------------------------------------
 server {
     listen 443 ssl;
     http2 on;
-    server_name billing.velyonrobotics.com;
+    server_name faturament.velyonrobotics.com;
 
-    set $billing_upstream billing:4600;
+    set $faturament_upstream faturament:4600;
 
-    ssl_certificate     /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/velyonrobotics.com/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/velyonrobotics.com/fullchain.pem;
+    ssl_certificate     /etc/letsencrypt/live/__CERT_NAME__/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/__CERT_NAME__/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/__CERT_NAME__/fullchain.pem;
 
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
@@ -373,7 +372,7 @@ server {
     error_log  /var/log/nginx/error.log warn;
 
     location /api/ {
-        proxy_pass http://$billing_upstream;
+        proxy_pass http://$faturament_upstream;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

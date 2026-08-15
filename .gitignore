@@ -14,6 +14,31 @@ docker/check_*.sql
 docker/certbot_certs/
 
 # Não é mais necessário: credenciais de banco/redis vêm todas de
-# velyon_api/.env via env_file. Se esse arquivo for recriado localmente
+# api/.env via env_file. Se esse arquivo for recriado localmente
 # por engano, não deve ser versionado.
 docker/.env
+
+# Arquivos de ambiente e credenciais em qualquer subdiretório
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Chaves privadas, certificados e material TLS
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+
+# Dumps e bancos locais
+*.sql.gz
+*.dump
+*.bak
+*.sqlite
+*.sqlite3
+
+# Estado local de certificados e runtime
+certbot_certs/
+letsencrypt/
+secrets/

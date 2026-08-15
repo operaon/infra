@@ -6,10 +6,10 @@ RUN rm -f /etc/nginx/conf.d/default.conf
 # ==================== STAGE 2: RUNTIME ====================
 FROM nginx:alpine
 
-LABEL maintainer="admin@velyonrobotics.com"
-LABEL version="1.0.0"
-LABEL description="Velyon - Nginx Reverse Proxy (API + Frontend)"
-LABEL org.opencontainers.image.source="https://github.com/velyon-homolog/velyon_infra"
+LABEL org.opencontainers.image.title="Operaon Nginx Reverse Proxy"
+LABEL org.opencontainers.image.description="Operaon reverse proxy for API, frontends and modular services"
+LABEL org.opencontainers.image.source="https://github.com/operaon/infra"
+LABEL org.opencontainers.image.version="1.0.0"
 
 COPY nginx/nginx.conf   /etc/nginx/nginx.conf
 COPY nginx/conf.d       /etc/nginx/conf.d
