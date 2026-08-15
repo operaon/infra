@@ -1,6 +1,6 @@
 # Operaon — Índice da documentação da organização
 
-Este documento é o mapa de documentação dos 23 repositórios da Operaon. Cada repositório mantém sua documentação local em "docs/INDEX.md". As decisões transversais são replicadas apenas como referência local; o código continua sendo a fonte executável.
+Este documento é o mapa de documentação dos 24 repositórios da Operaon. Cada repositório mantém sua documentação local em "docs/INDEX.md". As decisões transversais são replicadas apenas como referência local; o código continua sendo a fonte executável.
 
 ## Repositórios
 
@@ -27,7 +27,8 @@ Este documento é o mapa de documentação dos 23 repositórios da Operaon. Cada
 | [frontend_client](https://github.com/operaon/frontend_client) | frontend | Interface do cliente para agenda, serviços, pagamentos, arquivos e acompanhamento de solicitações. | 5175 | [docs/INDEX.md](https://github.com/operaon/frontend_client/blob/main/docs/INDEX.md) |
 | [frontend_site](https://github.com/operaon/frontend_site) | frontend | Site público, apresentação de serviços e entrada de jornadas públicas. | 5174 | [docs/INDEX.md](https://github.com/operaon/frontend_site/blob/main/docs/INDEX.md) |
 | [branding](https://github.com/operaon/branding) | module | Identidade visual, temas, assets referenciados, domínios white-label, canais e publicações versionadas. | 4800 | [docs/INDEX.md](https://github.com/operaon/branding/blob/main/docs/INDEX.md) |
-| [telemedicine](https://github.com/operaon/telemedicine) | module | Sessões virtuais, participantes, consentimentos explícitos, tokens de acesso, gravações opt-in e webhooks de provedores de vídeo. | 4810 | [docs/INDEX.md](https://github.com/operaon/telemedicine/blob/main/docs/INDEX.md) |
+| [telemedicine](https://github.com/operaon/telemedicine) | module | Sessões virtuais, participantes, consentimentos explícitos, tokens de acesso, gravações opt-in e contratos de virtual care. | 4810 | [docs/INDEX.md](https://github.com/operaon/telemedicine/blob/main/docs/INDEX.md) |
+| [video-media](https://github.com/operaon/video-media) | media plane | Control plane, signaling, salas efêmeras, tokens de mídia, credenciais ICE/TURN e engine nativo próprio; sem fornecedor de vídeo. | 4820 | [README.md](https://github.com/operaon/video-media/blob/main/README.md) |
 | [infra](https://github.com/operaon/infra) | infra | Topologia de ambientes, rede, deploy, observabilidade, secrets, bancos e políticas operacionais. | — | [docs/INDEX.md](https://github.com/operaon/infra/blob/main/docs/INDEX.md) |
 
 ## Padrões

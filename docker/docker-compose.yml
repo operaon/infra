@@ -195,6 +195,75 @@ services:
       retries: 3
       start_period: 60s
 
+  # ==================== Operaon-Owned Video Media Plane ====================
+  # O engine nativo não possui rede: somente o socket Unix compartilhado com o
+  # control plane é permitido. O control plane expõe apenas a API interna do
+  # media plane na rede app_network; WebRTC público será habilitado somente
+  # após a conclusão e homologação dos marcos do engine.
+  video-engine:
+    image: operaon-video-media-engine:latest
+    build:
+      context: ../../video-media
+      dockerfile: ops/docker/Dockerfile.engine
+    container_name: operaon_video_engine
+    restart: always
+    network_mode: none
+    volumes:
+      - video_engine_socket:/run/operaon
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=video-engine"
+    healthcheck:
+      test: ["CMD-SHELL", "test -S /run/operaon/video-media-engine.sock"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  video-media:
+    image: operaon-video-media-control:latest
+    build:
+      context: ../../video-media
+      dockerfile: ops/docker/Dockerfile.control
+    container_name: operaon_video_media
+    restart: always
+    env_file:
+      - ../../video-media/.env
+    environment:
+      MEDIA_ENGINE_SOCKET_PATH: /run/operaon/video-media-engine.sock
+    expose:
+      - 4820
+    depends_on:
+      video-engine:
+        condition: service_healthy
+    volumes:
+      - video_engine_socket:/run/operaon:ro
+    networks:
+      - app_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service=video-media"
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1G
+        reservations:
+          cpus: "1"
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4820/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
   # ==================== Node.js Frontend Tenant ====================
   frontend:
     image: tenant-frontend:latest
@@ -825,6 +894,7 @@ volumes:
   certbot_www:
   certbot_certs:
   minio_data:
+  video_engine_socket:
   # (faturament usa bind mounts, sem volumes nomeados)
 
 
